@@ -4,7 +4,7 @@
 #include <OneWire.h>
 #include <DallasTemperature.h>
 
-class TSensor_DS18B20 : public TControl, public DallasTemperature
+class TSensor_DS18B20 : public TControl, private DallasTemperature
 {
 private:
     uint8_t Pin;
@@ -12,7 +12,7 @@ private:
     float TemperatureValue{0};  
 public:
     
-    TSensor_DS18B20(TObject *_Parent, uint8_t _Pin) : TControl(_Parent)
+    TSensor_DS18B20(uint8_t _Pin) : TControl()
     {
         Pin = _Pin;
         oneWire.begin(Pin);

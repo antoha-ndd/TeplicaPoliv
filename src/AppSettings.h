@@ -3,24 +3,23 @@
 
 #include <espwifi.h>
 #include "Objects.h"
-#include "bmp180.h"
 #include "ObjectTimer.h"
-#include "ssd1306.h"
 #include "button.h"
 #include "varbasetypes.h"
 #include "MotorDriver.h"
 #include <GyverPortal.h>
 #include <Preferences.h>
+#include "ds18b20.h"
 
 GyverPortal ui;
 Preferences preferences;
 
 TApplication *App;
-TBMP180 *bmp;
-TTimer *Timer1, *Timer2;
-TSSD1306 *LCD;
-TButton *BtnOpen[3];
-TButton *BtnClose[3];
+TButton *Btn[5];
+TTimer *Timer1;
+
+TSensor_DS18B20 *Temp1, *Temp2;
+
 TMotorDriver *MotorDriver[3];
 // ConfigWebServer configServer(80);
 
@@ -34,34 +33,9 @@ struct Data
 };
 Data data;
 
-void OnOTAProgress(unsigned int Progress, unsigned int Total)
-{
-
-    static int Pr = 0;
-    int CurrentPr = (Progress * 100) / Total;
-
-    if (CurrentPr != Pr)
-    {
-        Pr = CurrentPr;
-        LCD->clearDisplay();
-        LCD->setCursor(10, 1);
-        LCD->setTextSize(1);
-        LCD->print("Updating firmware");
-        LCD->setCursor(45, 15);
-        LCD->setTextSize(2);
-        LCD->print(String(Pr) + "%");
-        LCD->display();
-    }
-}
 
 void BtnOpen1_Click(TButton *Button)
 {
-
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Open 1");
-    LCD->display();
 
     MotorDriver[0]->Open();
 };
@@ -69,94 +43,36 @@ void BtnOpen1_Click(TButton *Button)
 void BtnClose1_Click(TButton *Button)
 {
 
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Close 1");
-    LCD->display();
-
     MotorDriver[0]->Close();
 };
 
 void BtnOpen2_Click(TButton *Button)
 {
 
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Open 2");
-    LCD->display();
-
     MotorDriver[1]->Open();
 };
 
 void BtnClose2_Click(TButton *Button)
 {
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Close 2");
-    LCD->display();
-
     MotorDriver[1]->Close();
 };
 
 void BtnOpen3_Click(TButton *Button)
 {
 
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Open 3");
-    LCD->display();
-
     MotorDriver[2]->Open();
 };
 
 void BtnClose3_Click(TButton *Button)
 {
-    LCD->clearDisplay();
-    LCD->setCursor(1, 5);
-    LCD->setTextSize(2);
-    LCD->print("Close 3");
-    LCD->display();
 
     MotorDriver[2]->Close();
 };
 
-void Timer1_Timeout(TTimer *Timer)
-{
-
-    App->PrintLn(String(bmp->Temperature(true)));
-
-    LCD->clearDisplay();
-    LCD->setCursor(20, 5);
-    LCD->setTextSize(3);
-    LCD->print(String(bmp->Temperature()).c_str());
-    LCD->display();
-};
-
-void Timer2_Timeout(TTimer *Timer)
-{
-
-    ui.updateFloat("o1", 123);
-    ui.updateBool("ao2", false);
-    ui.updateBool("ao3", false);
-
-    float temp = bmp->Temperature(true);
-
-    for (int i = 0; i < 3; i++)
-    {
-        if (MotorDriver[i]->AutoOpen && data.o[i] < temp)
-            MotorDriver[i]->Open();
-
-        if (MotorDriver[i]->AutoClose && data.c[i] > temp)
-            MotorDriver[i]->Close();
-    }
-}
 
 void LoadSettings()
 {
+/*
     preferences.begin("config", false);
 
     data.c[0] = preferences.getFloat("c1", 0);
@@ -186,7 +102,7 @@ void LoadSettings()
     MotorDriver[1]->AutoOpen = data.ao[1];
     MotorDriver[2]->AutoOpen = data.ao[2];
 
-    preferences.end();
+    preferences.end();*/
 }
 
 void build()
@@ -196,9 +112,11 @@ void build()
 
     GP.BUILD_BEGIN(GP_DARK, 500);
 
-    GP.LABEL("Температура : " + String(bmp->Temperature(true)));
+    GP.LABEL("Температура 1 : " + String( Temp1->Temperature(true)));
+    GP.LABEL("Температура 2 : " + String( Temp2->Temperature(true)));
     GP.BREAK();
 
+/*
     GP.BUTTON("SaveBtn", "Сохранить");
 
     GP_MAKE_BLOCK_TAB("Окно 1",
@@ -296,11 +214,12 @@ void build()
 
     GP.BUTTON("RebootBtn", "Перезагрузить");
 
-    GP.BUILD_END();
+    GP.BUILD_END();*/
 }
 
 void action()
 {
+    /*
     if (ui.click())
     {
         // по клику переписать пришедшие данные в переменные
@@ -377,61 +296,58 @@ void action()
 
         if (ui.click("Close3"))
             MotorDriver[2]->Close();
-    }
+    }*/
 }
+
+
+void Timer1_Timeout(TTimer *Timer){
+
+    static bool State{false};
+    digitalWrite(2 , State);
+    State = !State;
+
+};
 
 void Init()
 {
 
-    ArduinoOTA.onProgress(OnOTAProgress);
     App = new TApplication();
     App->Run();
 
-    LCD = new TSSD1306();
-    LCD->clearDisplay();
-    LCD->setCursor(20, 5);
-    LCD->setTextSize(3);
-    LCD->print("START");
-    LCD->display();
-    delay(1000);
+    pinMode(2,OUTPUT);
 
-    bmp = new TBMP180(NULL);
-    bmp->Register(App);
+    Btn[0] = new TButton(NULL, 18, true);
+    Btn[0]->OnPress = BtnOpen1_Click;
+    Btn[0]->Register(App);
+
+    Btn[1] = new TButton(NULL, 19, true);
+    Btn[1]->OnPress = BtnOpen2_Click;
+    Btn[1]->Register(App);
+
+    Btn[2] = new TButton(NULL, 21, true);
+    Btn[2]->OnPress = BtnOpen3_Click;
+    Btn[2]->Register(App);
+
+    Btn[3] = new TButton(NULL, 22, true);
+    Btn[3]->OnPress = BtnClose1_Click;
+    Btn[3]->Register(App);
+
+    Btn[4] = new TButton(NULL, 23, true);
+    Btn[4]->OnPress = BtnClose2_Click;
+    Btn[4]->Register(App);
+
+
+    Temp1 = new TSensor_DS18B20(15);
+    Temp2 = new TSensor_DS18B20(0);
 
     Timer1 = new TTimer();
-    Timer1->OnTimeout = Timer1_Timeout;
     Timer1->Register(App);
-    Timer1->Start(5000);
+    Timer1->Start(1000);
+    Timer1->OnTimeout = Timer1_Timeout;
+     
 
-    Timer2 = new TTimer();
-    Timer2->OnTimeout = Timer2_Timeout;
-    Timer2->Register(App);
-    Timer2->Start(1000);
-
-    BtnOpen[0] = new TButton(NULL, 5, false);
-    BtnOpen[0]->OnPress = BtnOpen1_Click;
-    BtnOpen[0]->Register(App);
-
-    BtnOpen[1] = new TButton(NULL, 4, false);
-    BtnOpen[1]->OnPress = BtnOpen2_Click;
-    BtnOpen[1]->Register(App);
-
-    BtnOpen[2] = new TButton(NULL, 18, false);
-    BtnOpen[2]->OnPress = BtnOpen3_Click;
-    BtnOpen[2]->Register(App);
-
-    BtnClose[0] = new TButton(NULL, 19, false);
-    BtnClose[0]->OnPress = BtnClose1_Click;
-    BtnClose[0]->Register(App);
-
-    BtnClose[1] = new TButton(NULL, 16, false);
-    BtnClose[1]->OnPress = BtnClose2_Click;
-    BtnClose[1]->Register(App);
-
-    BtnClose[2] = new TButton(NULL, 17, false);
-    BtnClose[2]->OnPress = BtnClose3_Click;
-    BtnClose[2]->Register(App);
-
+    /*
+   
     MotorDriver[0] = new TMotorDriver(14, 27);
     MotorDriver[1] = new TMotorDriver(12, 13);
     MotorDriver[2] = new TMotorDriver(2, 26);
@@ -451,7 +367,7 @@ void Init()
     MotorDriver[1]->AutoOpen = true;
 
     MotorDriver[2]->AutoClose = true;
-    MotorDriver[2]->AutoOpen = true;
+    MotorDriver[2]->AutoOpen = true;*/
 
     ui.start();
     ui.attachBuild(build);
@@ -459,5 +375,4 @@ void Init()
 
     LoadSettings();
 }
-// open 10 13 12
-// close 8 9 11
+
