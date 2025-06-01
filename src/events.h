@@ -166,7 +166,7 @@ void action()
 void Timer1_Timeout(TTimer *Timer)
 {
 
-    if (Limiter->GetState())
+    if (!Limiter->GetState())
         MotorDriver[3]->Close();
 
     if (data.MinWaterTemp >= Temp2->Temperature())

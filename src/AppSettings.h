@@ -30,7 +30,7 @@ void Init()
     Btn[4]->OnPress = Button5_OnClick;
     Btn[4]->Register(App);
 
-    Limiter = new TButton(3, true);
+    Limiter = new TButton(13, false);
     Limiter->Register(App);
     
 
