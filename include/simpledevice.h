@@ -63,7 +63,7 @@ public:
         LastTime = GetTimerValue();
     }
 
-    TSimpleDevice(TObject *_Parent, uint8_t _Pin, TSimpleDeviceType _DeviceType) : TControl(_Parent)
+    TSimpleDevice( uint8_t _Pin, TSimpleDeviceType _DeviceType) : TControl()
     {
 
         Pin = _Pin;

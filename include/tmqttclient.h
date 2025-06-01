@@ -1,41 +1,97 @@
 #pragma once
 #include "Objects.h"
+#include "stack.h"
 
-#if defined(ESP8266)
+#if defined(ESP8266) || defined(ESP32)
 #include <MQTT.h>
 #include <WiFiClient.h>
-#include <ElegantOTA.h>
 
 WiFiClient Net;
-class TMQTTClient;
 
-void OnReceiveCb(MQTTClient *client, char topic[], char bytes[], int length);
-void OnReceiveEmpty(TMQTTClient *Client, String Topic, String Payload);
+typedef void (*TTopicEventHandler)(String payload);
+
+struct TTopicEventHandlerStruct
+{
+    TTopicEventHandler func;
+    String Topic;
+};
 
 class TMQTTClient : public TControl, public MQTTClient
 {
+
 private:
-    void (*OnReceiveEvent)(MQTTClient *client, char topic[], char bytes[], int length);
+    String Topic;
+    TStack<TTopicEventHandlerStruct *> TopicEventsHandlers;
+
+    // Обработчик сырых MQTT-сообщений
+    static void StaticMessageHandler(MQTTClient *client, char topic[], char payload[], int length)
+    {
+        TMQTTClient *instance = static_cast<TMQTTClient *>(client);
+        instance->ProcessMessage(topic, payload, length);
+    }
+
+    void ProcessMessage(char *topic, char *payload, int length)
+    {
+        String sTopic(topic);
+        String sPayload(payload, length);
+        MessageReceived(sTopic, sPayload);
+    }
 
 public:
-    bool Active{false};
-    String Server;
-    int Port{1883};
-    String Topic;
-    TMQTTClient(String _Server, int _Port, String _Topic) : TControl(NULL)
+    void RegisterTopicHandler(String _Topic, TTopicEventHandler func)
+    {
+
+        TTopicEventHandlerStruct *s = new TTopicEventHandlerStruct;
+        s->Topic = Topic + "/" + _Topic;
+        s->func = func;
+
+        s->Topic.toUpperCase();
+
+        TopicEventsHandlers.Add(s);
+    }
+
+    void UnregisterTopicHandler(String _Topic)
+    {
+
+        _Topic = Topic + "/" + _Topic;
+        _Topic.toUpperCase();
+
+        TTopicEventHandlerStruct *Current{NULL};
+        Current = TopicEventsHandlers.GetNext(Current);
+
+        while (Current != NULL)
+        {
+            if(Current->Topic == _Topic){
+                TopicEventsHandlers.Delete(Current);
+                return;
+            }
+            Current = TopicEventsHandlers.GetNext(Current);
+        }
+    }
+
+    void MessageReceived(String topic, String payload)
+    {
+        TTopicEventHandlerStruct *Current{NULL};
+        Current = TopicEventsHandlers.GetNext(Current);
+
+        topic.toUpperCase();
+
+        while (Current != NULL)
+        {
+            if(Current->Topic == topic){
+                Current->func(payload);
+                return;
+            }
+            Current = TopicEventsHandlers.GetNext(Current);
+        }
+    }
+
+    TMQTTClient(String Server, int Port, String _Topic) : TControl(NULL)
     {
         Topic = _Topic;
-        Server = _Server;
-        Port = _Port;
         begin(Server.c_str(), Port, Net);
-        ref = this;
-        OnReceiveEvent = OnReceiveCb;
-        OnReceive = OnReceiveEmpty;
-        onMessageAdvanced(OnReceiveEvent);
+        onMessageAdvanced(StaticMessageHandler);
     };
-    ~TMQTTClient();
-
-    void (*OnReceive)(TMQTTClient *Client, String Topic, String Payload){nullptr};
 
     void Send(String SubTopic, String Payload)
     {
@@ -52,27 +108,21 @@ public:
 
     virtual void Idle()
     {
-        /*if (Active && !connected())
+        static TTimeStamp ConnectTime{0};
+        TTimeStamp CurTime = millis();
+
+        if (!connected() && (CurTime - ConnectTime) > 5000)
+        {
+            ConnectTime = CurTime;
             Connect();
-        else if (!Active && connected())
-            disconnect();
-        else*/
-        loop();
+        }
+
+        else
+        {
+            ConnectTime = 0;
+            loop();
+        }
     }
-};
-
-TMQTTClient::~TMQTTClient()
-{
-}
-
-void OnReceiveCb(MQTTClient *client, char topic[], char bytes[], int length)
-{
-    TMQTTClient *Cl = (TMQTTClient *)client->ref;
-    Cl->OnReceive(Cl, String(topic), String(bytes));
-}
-
-void OnReceiveEmpty(TMQTTClient *Client, String Topic, String Payload) {
-
 };
 
 #endif

@@ -12,7 +12,7 @@ private:
 public:
 
 
-    TOutputDevice(TObject *_Parent, uint8_t _Pin) : TSimpleDevice(_Parent, _Pin, TSimpleDeviceType::OutputDevice)
+    TOutputDevice( uint8_t _Pin) : TSimpleDevice(_Pin, TSimpleDeviceType::OutputDevice)
     {
         Prepare();
     };

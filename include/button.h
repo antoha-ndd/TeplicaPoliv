@@ -16,7 +16,7 @@ public:
     int ClickCount{0};
 
     unsigned long DoubleClickTimeout{300};
-    TButton(TObject *_Parent, uint8_t _Pin, bool PullUp = true) : TSimpleDevice(_Parent, _Pin, PullUp ? TSimpleDeviceType::InputDevicePullUp : TSimpleDeviceType::InputDevice)
+    TButton(uint8_t _Pin, bool PullUp = true) : TSimpleDevice(_Pin, PullUp ? TSimpleDeviceType::InputDevicePullUp : TSimpleDeviceType::InputDevice)
     {
         OnChageState = ButtonOnChangeState;
         Prepare();

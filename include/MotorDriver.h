@@ -3,7 +3,7 @@
 #include "simpledevice.h"
 
 class TMotorDriver;
-void TMotorDriverEmptyOnChageState(TMotorDriver *Device){};
+void TMotorDriverEmptyOnChageState(TMotorDriver *Device) {};
 
 class TMotorDriver : public TControl
 {
@@ -15,7 +15,6 @@ private:
 public:
     bool AutoOpen{false};
     bool AutoClose{false};
-
 
     TTimeStamp Timeout{10000};
 
@@ -31,20 +30,20 @@ public:
 
         digitalWrite(OpenPin, LOW);
         digitalWrite(ClosePin, LOW);
-
     };
 
-    void InitClose(){
+    void InitClose()
+    {
 
         Open();
         Close();
-
     }
 
     void Open()
     {
 
-        if(State) return;
+        if (State)
+            return;
         digitalWrite(OpenPin, LOW);
         digitalWrite(ClosePin, LOW);
 
@@ -52,16 +51,17 @@ public:
         TimeStamp = millis();
         State = true;
         OnChageState(this);
-
     }
 
-    bool IsOpen(){
+    bool IsOpen()
+    {
         return State;
     }
 
     void Close()
     {
-        if(!State) return;
+        if (!State)
+            return;
 
         digitalWrite(OpenPin, LOW);
         digitalWrite(ClosePin, LOW);
@@ -74,24 +74,22 @@ public:
         OnChageState(this);
     }
 
-    void Idle(){
+    void Idle()
+    {
 
-
-           if(TimeStamp == 0) return;
+        if (TimeStamp == 0)
+            return;
 
         TTimeStamp CurTime = millis();
-        
-        if( (CurTime - TimeStamp) > Timeout ){
+
+        if ((CurTime - TimeStamp) > Timeout)
+        {
 
             TimeStamp = 0;
             digitalWrite(OpenPin, LOW);
             digitalWrite(ClosePin, LOW);
-
         }
-
     }
-
-
 
     void (*OnChageState)(TMotorDriver *Device){TMotorDriverEmptyOnChageState};
 };

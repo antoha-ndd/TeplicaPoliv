@@ -14,7 +14,7 @@ public:
     int Counter{0};
     int Freq{0};
     int Sens{0};
-    TFreqCounter(TObject *_Parent, uint8_t _Pin, bool PullUp = true) : TSimpleDevice(_Parent, _Pin, PullUp ? TSimpleDeviceType::InputDevicePullUp : TSimpleDeviceType::InputDevice)
+    TFreqCounter(uint8_t _Pin, bool PullUp = true) : TSimpleDevice( _Pin, PullUp ? TSimpleDeviceType::InputDevicePullUp : TSimpleDeviceType::InputDevice)
     {
         OnChageState = FreqOnChangeState;
         Prepare();
