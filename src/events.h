@@ -1,4 +1,43 @@
 #include "var.h"
+
+
+
+void MQTT_Motor1(String payload){
+
+    if(payload=="1") MotorDriver[0]->Open();
+    else MotorDriver[0]->Close();
+};
+
+void MQTT_Motor2(String payload){
+
+    if(payload=="1") MotorDriver[1]->Open();
+    else MotorDriver[1]->Close();
+
+
+};
+
+void MQTT_Motor3(String payload){
+
+    if(payload=="1") MotorDriver[2]->Open();
+    else MotorDriver[2]->Close();
+
+};
+
+void MQTT_Motor4(String payload){
+
+    if(payload=="1") MotorDriver[3]->Open();
+    else MotorDriver[3]->Close();
+
+};
+
+void MQTT_Pump(String payload){
+
+    if(payload=="1") Pump->On();
+    else Pump->Off();
+
+};
+
+
 void Button1_OnClick(TButton *Button)
 {
     int n = 0;
@@ -48,7 +87,7 @@ void Button5_OnClick(TButton *Button)
 
 void Pump_OnChageState(TSimpleDevice *Device, bool State)
 {
-
+    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
     Led[4]->SetState(Device->GetState());
 };
 
@@ -56,22 +95,26 @@ void Pump_OnChageState(TSimpleDevice *Device, bool State)
 
 void Motor1_OnChageState(TMotorDriver *Device)
 {
+    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
 
     Led[0]->SetState(Device->IsOpen());
 };
 
 void Motor2_OnChageState(TMotorDriver *Device)
 {
+    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
     Led[1]->SetState(Device->IsOpen());
 };
 
 void Motor3_OnChageState(TMotorDriver *Device)
 {
+    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
     Led[2]->SetState(Device->IsOpen());
 };
 
 void Motor4_OnChageState(TMotorDriver *Device)
 {
+    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
     Led[3]->SetState(Device->IsOpen());
 };
 
@@ -164,14 +207,16 @@ void TimerMQTT_Timeout(TTimer *Timer)
 {
     if(mqtt->connected()){
 
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(),"test");
-        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(),"test"); 
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
+
+        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
+        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(), String(Limiter->GetState()) );
+
+        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(), String(Temp1->Temperature(true)) );
+        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(), String(Temp2->Temperature(true)) ); 
 
     }
     

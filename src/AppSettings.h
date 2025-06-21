@@ -98,11 +98,16 @@ void Init()
     
     TimerMQTT = new TTimer();
     TimerMQTT->Register(App);
-    TimerMQTT->Start(1000);
+    TimerMQTT->Start(5000);
     TimerMQTT->OnTimeout = TimerMQTT_Timeout;
 
     mqtt = new TMQTTClient(data.MQTTServer , data.Port, data.MQTTTopic);
     mqtt->Register(App);
 
+    mqtt->RegisterTopicHandler("cmd/motor1", MQTT_Motor1);
+    mqtt->RegisterTopicHandler("cmd/motor2", MQTT_Motor2);
+    mqtt->RegisterTopicHandler("cmd/motor3", MQTT_Motor3);
+    mqtt->RegisterTopicHandler("cmd/motor4", MQTT_Motor4);
+    mqtt->RegisterTopicHandler("cmd/pump", MQTT_Pump);
 
 }
