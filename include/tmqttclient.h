@@ -90,6 +90,7 @@ public:
     {
         Topic = _Topic;
         begin(Server.c_str(), Port, Net);
+        
         onMessageAdvanced(StaticMessageHandler);
     };
 

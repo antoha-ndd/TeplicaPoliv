@@ -162,17 +162,17 @@ void Timer1_Timeout(TTimer *Timer)
 
 void TimerMQTT_Timeout(TTimer *Timer)
 {
-   // if(mqtt->connected()){
+    if(mqtt->connected()){
 
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(),0);
-        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(),0); 
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(),"test");
+        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(),"test"); 
 
- //   }
+    }
     
 };
