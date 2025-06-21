@@ -27,7 +27,7 @@ TSensor_DS18B20 *Temp1, *Temp2;
 TMotorDriver *MotorDriver[4];
 TOutputDevice *Pump;
 TButton *Limiter;
-TMQTTClient *mqtt;
+//TMQTTClient *mqtt;
 
 struct Data
 {

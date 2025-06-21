@@ -5,6 +5,7 @@
 
 void Init()
 {
+    //setupWiFi();
 
     LoadSettings();
 
@@ -93,7 +94,7 @@ void Init()
     Timer1->Register(App);
     Timer1->Start(100);
     Timer1->OnTimeout = Timer1_Timeout;
-
+/*
 
     
     TimerMQTT = new TTimer();
@@ -104,10 +105,13 @@ void Init()
     mqtt = new TMQTTClient(data.MQTTServer , data.Port, data.MQTTTopic);
     mqtt->Register(App);
 
-    mqtt->RegisterTopicHandler("cmd/motor1", MQTT_Motor1);
+/*    mqtt->RegisterTopicHandler("cmd/motor1", MQTT_Motor1);
     mqtt->RegisterTopicHandler("cmd/motor2", MQTT_Motor2);
     mqtt->RegisterTopicHandler("cmd/motor3", MQTT_Motor3);
     mqtt->RegisterTopicHandler("cmd/motor4", MQTT_Motor4);
-    mqtt->RegisterTopicHandler("cmd/pump", MQTT_Pump);
+/    mqtt->RegisterTopicHandler("cmd/pump", MQTT_Pump);
+*/
+
+    //if( Btn[0]->GetState() )
 
 }

@@ -87,7 +87,7 @@ void Button5_OnClick(TButton *Button)
 
 void Pump_OnChageState(TSimpleDevice *Device, bool State)
 {
-    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
+    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
     Led[4]->SetState(Device->GetState());
 };
 
@@ -95,26 +95,26 @@ void Pump_OnChageState(TSimpleDevice *Device, bool State)
 
 void Motor1_OnChageState(TMotorDriver *Device)
 {
-    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
+    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
 
     Led[0]->SetState(Device->IsOpen());
 };
 
 void Motor2_OnChageState(TMotorDriver *Device)
 {
-    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
+    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
     Led[1]->SetState(Device->IsOpen());
 };
 
 void Motor3_OnChageState(TMotorDriver *Device)
 {
-    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
+    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
     Led[2]->SetState(Device->IsOpen());
 };
 
 void Motor4_OnChageState(TMotorDriver *Device)
 {
-    if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
+    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
     Led[3]->SetState(Device->IsOpen());
 };
 
@@ -184,7 +184,7 @@ void action()
 
             preferences.end();
             
-            mqtt->UpdateSetting(data.MQTTServer , data.Port, data.MQTTTopic);
+  //          mqtt->UpdateSetting(data.MQTTServer , data.Port, data.MQTTTopic);
         }
 
         if (ui.click("RebootBtn"))
@@ -202,7 +202,7 @@ void Timer1_Timeout(TTimer *Timer)
 };
 
 
-
+/*
 void TimerMQTT_Timeout(TTimer *Timer)
 {
     if(mqtt->connected()){
@@ -221,3 +221,21 @@ void TimerMQTT_Timeout(TTimer *Timer)
     }
     
 };
+
+*/
+
+void setupWiFi()
+{
+
+    WiFiManager wm; // Создаем объект WiFiManager
+
+    wm.setConnectTimeout(30);       // Таймаут подключения 30 секунд
+    wm.setConfigPortalTimeout(180); // Автоматическое закрытие портала через 180 секунд
+
+    // Запускаем режим конфигурации
+    if (!wm.startConfigPortal("AutoconnectAP"))
+    {                  // Задаем имя AP
+        ESP.restart(); // Перезагрузка в случае неудачи
+        delay(1000);
+    }
+}
