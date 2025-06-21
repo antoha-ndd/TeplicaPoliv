@@ -52,23 +52,7 @@ void Pump_OnChageState(TSimpleDevice *Device, bool State)
     Led[4]->SetState(Device->GetState());
 };
 
-void Fc_OnChangeFreq(TFreqCounter *Device, unsigned int Freq)
-{
 
-    static bool ValveState = false;
-
-    if (Freq > 3)
-    {
-        Pump->On();
-        ValveState = true;
-    }
-
-    if (Freq < 3 && ValveState)
-    {
-        Pump->Off();
-        ValveState = false;
-    }
-};
 
 void Motor1_OnChageState(TMotorDriver *Device)
 {
@@ -156,6 +140,8 @@ void action()
             preferences.putString("Topic", data.MQTTTopic);
 
             preferences.end();
+            
+            mqtt->UpdateSetting(data.MQTTServer , data.Port, data.MQTTTopic);
         }
 
         if (ui.click("RebootBtn"))
@@ -169,11 +155,24 @@ void Timer1_Timeout(TTimer *Timer)
     if (!Limiter->GetState())
         MotorDriver[3]->Close();
 
-    if (data.MinWaterTemp >= Temp2->Temperature())
-    {
 
-        MotorDriver[0]->Close();
-        MotorDriver[1]->Close();
-        MotorDriver[2]->Close();
-    }
+};
+
+
+
+void TimerMQTT_Timeout(TTimer *Timer)
+{
+   // if(mqtt->connected()){
+
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(),0);
+        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(),0); 
+
+ //   }
+    
 };

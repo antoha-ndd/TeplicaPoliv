@@ -6,6 +6,8 @@
 void Init()
 {
 
+    LoadSettings();
+
     App = new TApplication();
     App->Run();
 
@@ -76,10 +78,9 @@ void Init()
         MotorDriver[i]->InitClose();
     }
 
-    Fc = new TFreqCounter(1);
-    Fc->Register(App);
-    
-    Fc->OnChangeFreq = Fc_OnChangeFreq;
+    //Fc = new TFreqCounter(1);
+    PumpBtn = new TButton(1);
+
 
     ui.start();
     ui.attachBuild(build);
@@ -92,4 +93,16 @@ void Init()
     Timer1->Register(App);
     Timer1->Start(100);
     Timer1->OnTimeout = Timer1_Timeout;
+
+
+    
+    TimerMQTT = new TTimer();
+    TimerMQTT->Register(App);
+    TimerMQTT->Start(1000);
+    TimerMQTT->OnTimeout = TimerMQTT_Timeout;
+
+    mqtt = new TMQTTClient(data.MQTTServer , data.Port, data.MQTTTopic);
+    mqtt->Register(App);
+
+
 }

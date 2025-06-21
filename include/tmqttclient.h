@@ -99,6 +99,14 @@ public:
             publish((Topic + "/" + SubTopic).c_str(), Payload.c_str());
     }
 
+    void UpdateSetting(String Server, int Port, String _Topic){
+
+        disconnect();
+        begin(Server.c_str(), Port, Net);
+        Topic = _Topic;
+
+    }
+
     void Connect()
     {
         if (WiFi.status() == WL_CONNECTED)
