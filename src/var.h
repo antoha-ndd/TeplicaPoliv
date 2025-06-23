@@ -11,9 +11,10 @@
 #include <GyverPortal.h>
 #include <Preferences.h>
 #include "ds18b20.h"
-#include "tmqttclient.h"
 #include "led.h"
 #include "freqcounter.h"
+//#include <ESP8266WiFi.h>
+#include <PubSubClient.h>
 
 GyverPortal ui;
 Preferences preferences;
@@ -27,6 +28,9 @@ TSensor_DS18B20 *Temp1, *Temp2;
 TMotorDriver *MotorDriver[4];
 TOutputDevice *Pump;
 TButton *Limiter;
+WiFiClient espClient;
+PubSubClient mqtt(espClient);
+
 //TMQTTClient *mqtt;
 
 struct Data

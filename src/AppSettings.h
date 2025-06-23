@@ -3,15 +3,86 @@
 #include "events.h"
 
 
+
+void callback(char *topic, byte *payload, unsigned int length)
+{
+
+    String Topic = String(topic);
+    String Payload = "";
+    String MQTTTopic = data.MQTTTopic;
+    
+
+    Topic.toUpperCase();
+    MQTTTopic.toUpperCase();
+
+    for (int i = 0; i < length; i++)
+        Payload += (char)payload[i];
+
+    
+    if (Topic == MQTTTopic + "CMD/MOTOR1")
+    {
+
+        if (Payload == "1")
+            MotorDriver[0]->Open();
+        else
+            MotorDriver[0]->Close();
+    }
+    else if (Topic == MQTTTopic + "CMD/MOTOR2")
+    {
+        if (Payload == "1")
+            MotorDriver[1]->Open();
+        else
+            MotorDriver[1]->Close();
+    }
+    else if (Topic == MQTTTopic + "CMD/MOTOR3")
+    {
+        if (Payload == "1")
+            MotorDriver[2]->Open();
+        else
+            MotorDriver[2]->Close();
+    }
+    else if (Topic == MQTTTopic + "CMD/MOTOR4")
+    {
+        if (Payload == "1")
+            MotorDriver[3]->Open();
+        else
+            MotorDriver[3]->Close();
+    }
+    else if (Topic == MQTTTopic + "CMD/PUMP")
+    {
+
+        if (Payload == "1")
+            Pump->On();
+        else
+            Pump->Off();
+    }
+}
+
+void reconnect()
+{
+    // Loop until we're reconnected
+    while (!mqtt.connected())
+    {
+        String clientId = "ESP8266Client-";
+        clientId += String(random(0xffff), HEX);
+
+        if (mqtt.connect(clientId.c_str()))
+        {
+            mqtt.subscribe(data.MQTTTopic);
+        }
+        else
+            delay(5000);
+    }
+}
+
 void Init()
 {
-    //setupWiFi();
+    // setupWiFi();
 
     LoadSettings();
 
     App = new TApplication();
     App->Run();
-
 
     Btn[0] = new TButton(18, true);
     Btn[0]->OnPress = Button1_OnClick;
@@ -35,10 +106,8 @@ void Init()
 
     Limiter = new TButton(13, false);
     Limiter->Register(App);
-    
 
     Led[0] = new TLed(2);
-    
 
     Led[1] = new TLed(4);
     Led[1]->Off();
@@ -79,9 +148,8 @@ void Init()
         MotorDriver[i]->InitClose();
     }
 
-    //Fc = new TFreqCounter(1);
+    // Fc = new TFreqCounter(1);
     PumpBtn = new TButton(1);
-
 
     ui.start();
     ui.attachBuild(build);
@@ -89,29 +157,16 @@ void Init()
 
     LoadSettings();
 
-
     Timer1 = new TTimer();
     Timer1->Register(App);
     Timer1->Start(100);
     Timer1->OnTimeout = Timer1_Timeout;
-/*
 
-    
+    mqtt.setServer(data.MQTTServer, data.Port);
+    mqtt.setCallback(callback);
+
     TimerMQTT = new TTimer();
     TimerMQTT->Register(App);
     TimerMQTT->Start(5000);
     TimerMQTT->OnTimeout = TimerMQTT_Timeout;
-
-    mqtt = new TMQTTClient(data.MQTTServer , data.Port, data.MQTTTopic);
-    mqtt->Register(App);
-
-/*    mqtt->RegisterTopicHandler("cmd/motor1", MQTT_Motor1);
-    mqtt->RegisterTopicHandler("cmd/motor2", MQTT_Motor2);
-    mqtt->RegisterTopicHandler("cmd/motor3", MQTT_Motor3);
-    mqtt->RegisterTopicHandler("cmd/motor4", MQTT_Motor4);
-/    mqtt->RegisterTopicHandler("cmd/pump", MQTT_Pump);
-*/
-
-    //if( Btn[0]->GetState() )
-
 }

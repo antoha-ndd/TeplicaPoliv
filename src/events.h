@@ -87,7 +87,7 @@ void Button5_OnClick(TButton *Button)
 
 void Pump_OnChageState(TSimpleDevice *Device, bool State)
 {
-    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
+    if(mqtt.connected()) mqtt.publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()).c_str() );
     Led[4]->SetState(Device->GetState());
 };
 
@@ -95,26 +95,26 @@ void Pump_OnChageState(TSimpleDevice *Device, bool State)
 
 void Motor1_OnChageState(TMotorDriver *Device)
 {
-    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
+    if(mqtt.connected()) mqtt.publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()).c_str() );
 
     Led[0]->SetState(Device->IsOpen());
 };
 
 void Motor2_OnChageState(TMotorDriver *Device)
 {
-    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
+    if(mqtt.connected()) mqtt.publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()).c_str() );
     Led[1]->SetState(Device->IsOpen());
 };
 
 void Motor3_OnChageState(TMotorDriver *Device)
 {
-    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
+    if(mqtt.connected()) mqtt.publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()).c_str() );
     Led[2]->SetState(Device->IsOpen());
 };
 
 void Motor4_OnChageState(TMotorDriver *Device)
 {
-    //if(mqtt->connected()) mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
+    if(mqtt.connected()) mqtt.publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()).c_str() );
     Led[3]->SetState(Device->IsOpen());
 };
 
@@ -184,7 +184,6 @@ void action()
 
             preferences.end();
             
-  //          mqtt->UpdateSetting(data.MQTTServer , data.Port, data.MQTTTopic);
         }
 
         if (ui.click("RebootBtn"))
@@ -202,27 +201,30 @@ void Timer1_Timeout(TTimer *Timer)
 };
 
 
-/*
+
 void TimerMQTT_Timeout(TTimer *Timer)
 {
-    if(mqtt->connected()){
+    
+    if(mqtt.connected()){
 
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()) );
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()) );
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()) );
-        mqtt->publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()) );
+    
+/*
+        mqtt.publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()).c_str() );
+        mqtt.publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()).c_str() );
+        mqtt.publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()).c_str() );
+        mqtt.publish(String(String(data.MQTTTopic)+"/Motor4").c_str(), String(MotorDriver[3]->IsOpen()).c_str() );
 
-        mqtt->publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()) );
-        mqtt->publish(String(String(data.MQTTTopic)+"/Limiter").c_str(), String(Limiter->GetState()) );
+        mqtt.publish(String(String(data.MQTTTopic)+"/Pump").c_str(), String(Pump->GetState()).c_str() );
+        mqtt.publish(String(String(data.MQTTTopic)+"/Limiter").c_str(), String(Limiter->GetState()).c_str() );
 
-        mqtt->publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(), String(Temp1->Temperature(true)) );
-        mqtt->publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(), String(Temp2->Temperature(true)) ); 
-
+        mqtt.publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(), String(Temp1->Temperature(true)).c_str() );
+        mqtt.publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(), String(Temp2->Temperature(true)).c_str() ); 
+*/
     }
     
 };
 
-*/
+
 
 void setupWiFi()
 {
