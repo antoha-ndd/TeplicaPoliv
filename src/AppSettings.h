@@ -84,7 +84,7 @@ void Init()
     App = new TApplication();
     App->Run();
 
-    Btn[0] = new TButton(18, true);
+    Btn[0] = new TButton(21, true); //18
     Btn[0]->OnPress = Button1_OnClick;
     Btn[0]->Register(App);
 
@@ -92,7 +92,7 @@ void Init()
     Btn[1]->OnPress = Button2_OnClick;
     Btn[1]->Register(App);
 
-    Btn[2] = new TButton(21, true);
+    Btn[2] = new TButton(18, true); //21
     Btn[2]->OnPress = Button3_OnClick;
     Btn[2]->Register(App);
 
@@ -107,12 +107,13 @@ void Init()
     Limiter = new TButton(13, false);
     Limiter->Register(App);
 
-    Led[0] = new TLed(2);
+    Led[0] = new TLed(16); //2
+    Led[0]->Off();
 
     Led[1] = new TLed(4);
     Led[1]->Off();
 
-    Led[2] = new TLed(16);
+    Led[2] = new TLed(2); //16
     Led[2]->Off();
 
     Led[3] = new TLed(17);

@@ -31,7 +31,7 @@ TButton *Limiter;
 WiFiClient espClient;
 PubSubClient mqtt(espClient);
 
-//TMQTTClient *mqtt;
+
 
 struct Data
 {
