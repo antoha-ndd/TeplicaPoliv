@@ -208,7 +208,7 @@ void TimerMQTT_Timeout(TTimer *Timer)
     if(mqtt.connected()){
 
     
-/*
+
         mqtt.publish(String(String(data.MQTTTopic)+"/Motor1").c_str(), String(MotorDriver[0]->IsOpen()).c_str() );
         mqtt.publish(String(String(data.MQTTTopic)+"/Motor2").c_str(), String(MotorDriver[1]->IsOpen()).c_str() );
         mqtt.publish(String(String(data.MQTTTopic)+"/Motor3").c_str(), String(MotorDriver[2]->IsOpen()).c_str() );
@@ -219,7 +219,8 @@ void TimerMQTT_Timeout(TTimer *Timer)
 
         mqtt.publish(String(String(data.MQTTTopic)+"/GroundTemp").c_str(), String(Temp1->Temperature(true)).c_str() );
         mqtt.publish(String(String(data.MQTTTopic)+"/WaterTemp").c_str(), String(Temp2->Temperature(true)).c_str() ); 
-*/
+
+        
     }
     
 };

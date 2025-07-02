@@ -8,13 +8,13 @@ void callback(char *topic, byte *payload, unsigned int length)
 {
 
     String Topic = String(topic);
-    String Payload = "";
-    String MQTTTopic = data.MQTTTopic;
+    String Payload ="";// String((char*)payload);
+    String MQTTTopic = String(data.MQTTTopic) + "/";
     
 
     Topic.toUpperCase();
     MQTTTopic.toUpperCase();
-
+    
     for (int i = 0; i < length; i++)
         Payload += (char)payload[i];
 
@@ -68,7 +68,7 @@ void reconnect()
 
         if (mqtt.connect(clientId.c_str()))
         {
-            mqtt.subscribe(data.MQTTTopic);
+            mqtt.subscribe( String(""+ String(data.MQTTTopic)+"/#").c_str());
         }
         else
             delay(5000);
@@ -165,6 +165,7 @@ void Init()
 
     mqtt.setServer(data.MQTTServer, data.Port);
     mqtt.setCallback(callback);
+    //mqtt.subscribe(data.MQTTTopic);
 
     TimerMQTT = new TTimer();
     TimerMQTT->Register(App);
