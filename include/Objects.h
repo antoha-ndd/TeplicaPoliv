@@ -14,6 +14,12 @@ typedef unsigned long  TTimeStamp;
 typedef unsigned int ObjectId;
 typedef void (*TApplicationPrintCallback)(TApplication *App, String Buffer);
 
+struct TSystemMessage{
+	String Type;
+	String Name;
+	String Param;
+};
+
 void DefaultApplicationPrintCallBack(TApplication *App, String Buffer)
 {
 	Serial.print(Buffer);
@@ -138,17 +144,14 @@ private:
 		MQTT_APP_instance->MQTT_ProcessMessage(Topic,Payload); 
     }
 
-    void MQTT_ProcessMessage(String topic, String payload)
-    {
+    void MQTT_ProcessMessage(String topic, String payload);
 
-    }
 	#endif
 	
 
 public:
 	uint64_t Tick{0};
 	TStack<TControl *> *Controls;
-	TStack<TActiveControl *> *ActiveControls;
 	bool DoStop{false};
 
 	#if defined(ESP8266) || defined(ESP32)
@@ -165,6 +168,18 @@ public:
 			mqtt.setCallback(MQTT_callback);
 			MQTT_Intialized = true;
 			MQTT_APP_instance = this;
+
+		}
+
+		void SubScribe(String topic){
+
+			mqtt.subscribe(topic.c_str());
+
+		}
+
+		void Publish(String Topic, String Payload){
+
+			mqtt.publish(Topic.c_str(), Payload.c_str());
 
 		}
 
@@ -217,7 +232,7 @@ public:
 	TApplication() : TObject(NULL)
 	{
 		Controls = new TStack<TControl *>();
-		ActiveControls = new TStack<TActiveControl *>();
+		
 
 #if defined(ESP8266) || defined(ESP32) 
 
@@ -251,18 +266,6 @@ public:
 	}
 
 	void DeleteControl(TControl *Control);
-	void AddActiveControl(TActiveControl *Control)
-	{
-		if (CurrentActiveControl == NULL)
-			CurrentActiveControl = Control;
-		ActiveControls->Add(Control);
-	}
-	void DeleteActiveControl(TActiveControl *Control)
-	{
-		ActiveControls->Delete(Control);
-		if (ActiveControls->GetCount() == 0)
-			CurrentActiveControl = NULL;
-	}
 
 	void Idle();
 	uint64_t GetTick()
@@ -286,10 +289,11 @@ class TControl : public TObject
 protected:
 	TApplication *Application{NULL};
 
+
 public:
 	TControl(TObject *_Parent) : TObject(_Parent) {};
 	TControl() : TObject(NULL) {};
-
+	virtual void SystemMessage(TSystemMessage msg){};
 	TApplication *GetApplication()
 	{
 		return Application;
@@ -315,48 +319,6 @@ TControl::~TControl()
 	Application->DeleteControl(this);
 }
 
-class TActiveControl : public TControl
-{
-private:
-	/* data */
-
-public:
-	TActiveControl(TObject *_Parent) : TControl(_Parent)
-	{
-		Application->AddActiveControl(this);
-	};
-	~TActiveControl();
-
-	void Action()
-	{
-		OnAction();
-	}
-
-	void Focus()
-	{
-		OnFocus();
-	}
-
-	void FocusLeave()
-	{
-		OnFocusLeave();
-	}
-
-	void (*OnAction)(){EmptryEvent};
-	void (*OnFocus)(){EmptryEvent};
-	void (*OnFocusLeave)(){EmptryEvent};
-};
-
-TActiveControl::~TActiveControl()
-{
-	Application->DeleteActiveControl(this);
-}
-
-void TApplication::NeedAction()
-{
-	if (CurrentActiveControl != NULL)
-		CurrentActiveControl->Action();
-}
 
 void TApplication::DeleteControl(TControl *Control)
 {
@@ -427,4 +389,24 @@ void TApplication::Idle()
 void TApplication::AddControl(TControl *Control)
 {
 	Controls->Add(Control);
+}
+
+
+
+void TApplication::MQTT_ProcessMessage(String topic, String payload)
+{
+	TControl *CurrentControl{NULL};
+	CurrentControl = Controls->GetNext(CurrentControl);
+
+	while (CurrentControl != NULL)
+	{
+		TSystemMessage msg;
+		msg.Type = "MQTT";
+		msg.Name = topic;
+		msg.Param = payload;
+
+		CurrentControl->SystemMessage(msg);
+		CurrentControl = Controls->GetNext(CurrentControl);
+	}
+
 }
