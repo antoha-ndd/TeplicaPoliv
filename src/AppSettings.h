@@ -2,7 +2,7 @@
 #include "var.h"
 #include "events.h"
 
-
+/*
 
 void callback(char *topic, byte *payload, unsigned int length)
 {
@@ -58,22 +58,7 @@ void callback(char *topic, byte *payload, unsigned int length)
     }
 }
 
-void reconnect()
-{
-    // Loop until we're reconnected
-    while (!mqtt.connected())
-    {
-        String clientId = "ESP8266Client-";
-        clientId += String(random(0xffff), HEX);
-
-        if (mqtt.connect(clientId.c_str()))
-        {
-            mqtt.subscribe( String(""+ String(data.MQTTTopic)+"/#").c_str());
-        }
-        else
-            delay(5000);
-    }
-}
+*/
 
 void Init()
 {
@@ -163,9 +148,6 @@ void Init()
     Timer1->Start(100);
     Timer1->OnTimeout = Timer1_Timeout;
 
-    mqtt.setServer(data.MQTTServer, data.Port);
-    mqtt.setCallback(callback);
-    //mqtt.subscribe(data.MQTTTopic);
 
     TimerMQTT = new TTimer();
     TimerMQTT->Register(App);

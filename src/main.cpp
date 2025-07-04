@@ -18,9 +18,9 @@ void loop()
 
   App->Idle();
   ui.tick();
-  
+ /* 
   if (!mqtt.connected()) {
     reconnect();
   }
-  mqtt.loop();
+  mqtt.loop();*/
 }

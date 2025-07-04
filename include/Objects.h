@@ -4,6 +4,7 @@
 #if defined(ESP8266) || defined(ESP32)
 #include "espwifi.h"
 #include <WiFiClient.h>
+#include <PubSubClient.h>
 #endif
 
 class TApplication;
@@ -115,12 +116,76 @@ private:
 	bool isRun{false};
 	TApplicationPrintCallback PrintCb{DefaultApplicationPrintCallBack};
 	TApplicationPrintCallback PrintLnCb{DefaultApplicationPrintLnCallBack};
+	
+	#if defined(ESP8266) || defined(ESP32)
+	WiFiClient MQTTClient;
+	PubSubClient mqtt;
+	String MQTT_Server;
+	int MQTT_Port;
+	String MQTT_Topic;
+	bool MQTT_Intialized{false};
+	static TApplication* MQTT_APP_instance;
+
+
+	static void MQTT_callback(char *topic, byte *payload, unsigned int length){
+		
+		String Topic = String(topic);
+		String Payload ="";
+			
+		for (int i = 0; i < length; i++)
+			Payload += (char)payload[i];
+
+		MQTT_APP_instance->MQTT_ProcessMessage(Topic,Payload); 
+    }
+
+    void MQTT_ProcessMessage(String topic, String payload)
+    {
+
+    }
+	#endif
+	
 
 public:
 	uint64_t Tick{0};
 	TStack<TControl *> *Controls;
 	TStack<TActiveControl *> *ActiveControls;
 	bool DoStop{false};
+
+	#if defined(ESP8266) || defined(ESP32)
+
+		int MQTT_Timeout{5000};
+		
+		void InitMQTT(String Server, int Port, String Topic){
+			MQTT_Server = Server;
+			MQTT_Port = Port;
+			MQTT_Topic = Topic;
+
+			mqtt.setClient(MQTTClient);
+			mqtt.setServer(MQTT_Server.c_str(), MQTT_Port);
+			mqtt.setCallback(MQTT_callback);
+			MQTT_Intialized = true;
+			MQTT_APP_instance = this;
+
+		}
+
+		void reconnect()
+		{
+			// Loop until we're reconnected
+			while (!mqtt.connected())
+			{
+				String clientId = "ESP8266Client-";
+				clientId += String(random(0xffff), HEX);
+		
+				if (mqtt.connect(clientId.c_str()))
+				{
+					mqtt.subscribe( (MQTT_Topic+"/#").c_str());
+				}
+				else
+					delay(5000);
+			}
+		}
+
+	#endif
 
 	void Print(String Buffer)
 	{
@@ -148,6 +213,7 @@ public:
 	{
 		return isRun;
 	}
+
 	TApplication() : TObject(NULL)
 	{
 		Controls = new TStack<TControl *>();
@@ -165,6 +231,7 @@ public:
 		ArduinoOTA.setPassword("8764956");
 		ArduinoOTA.begin();
 
+	
 #endif
 
 	}
@@ -307,6 +374,7 @@ void TApplication::Stop()
 
 void TApplication::Idle()
 {
+	TTimeStamp CurrentTime = millis();
 #if defined(ESP8266) || defined(ESP32)
 	static unsigned long WiFiConnectionTimeout = 0;
 
@@ -314,13 +382,26 @@ void TApplication::Idle()
 
 	if (WiFi.status() != WL_CONNECTED)
 	{
-		unsigned long CurrentTime = millis();
+		
 		if ((CurrentTime - WiFiConnectionTimeout) >= 10000)
 		{
 			WiFiConnectionTimeout = CurrentTime;
 			Serial.println("Try reconnect WiFi");
 			WiFi.reconnect();
 		}
+	}
+
+	if(MQTT_Intialized){
+
+		static TTimeStamp MQTT_Last_Tick=0;
+
+		if( (CurrentTime - MQTT_Last_Tick) > MQTT_Timeout){
+
+			MQTT_Last_Tick = CurrentTime;
+			reconnect();
+
+		}
+
 	}
 
 #endif

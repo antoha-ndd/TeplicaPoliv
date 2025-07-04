@@ -14,7 +14,7 @@
 #include "led.h"
 #include "freqcounter.h"
 //#include <ESP8266WiFi.h>
-#include <PubSubClient.h>
+
 
 GyverPortal ui;
 Preferences preferences;
@@ -28,8 +28,7 @@ TSensor_DS18B20 *Temp1, *Temp2;
 TMotorDriver *MotorDriver[4];
 TOutputDevice *Pump;
 TButton *Limiter;
-WiFiClient espClient;
-PubSubClient mqtt(espClient);
+
 
 
 
