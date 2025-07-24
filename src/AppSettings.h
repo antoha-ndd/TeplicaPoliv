@@ -171,4 +171,14 @@ void Init()
     TimerMQTT->Register(App);
     TimerMQTT->Start(5000);
     TimerMQTT->OnTimeout = TimerMQTT_Timeout;
+
+    bool State = false;
+    for (size_t i = 0; i < 10; i++)
+    {
+        State=!State;
+        for (size_t j = 0; j < 5; j++)
+            Led[j]->SetState(State);
+                
+        delay(500);
+    }    
 }
