@@ -441,6 +441,13 @@ void LoadSettings()
         strncpy(data.WiFiPassword, s.c_str(), sizeof(data.WiFiPassword) - 1);
         data.WiFiPassword[sizeof(data.WiFiPassword) - 1] = '\0';
     }
+    {
+        String s = preferences.getString("ota_pass", "");
+        if (s.length() == 0)
+            s = String(OTA_DEFAULT_PASSWORD);
+        strncpy(data.OTAPassword, s.c_str(), sizeof(data.OTAPassword) - 1);
+        data.OTAPassword[sizeof(data.OTAPassword) - 1] = '\0';
+    }
 
     webLoadLabel(data.Temp1Name, "lbl_t1", "T1");
     webLoadLabel(data.Temp2Name, "lbl_t2", "T2");
@@ -514,7 +521,11 @@ void build()
 
                       GP_MAKE_BOX(
                           GP.LABEL("Пароль");
-                          GP.PASS("WiFiPass", "", data.WiFiPassword, "", 63);););
+                          GP.PASS("WiFiPass", "", data.WiFiPassword, "", 63););
+
+                      GP_MAKE_BOX(
+                          GP.LABEL("OTA пароль");
+                          GP.PASS("OTAPass", "", data.OTAPassword, "", 63);););
 
     GP.BLOCK_TAB_BEGIN("MQTT");
 
@@ -605,6 +616,7 @@ void action()
         ui.clickInt("MQTTPort", data.Port);
         ui.clickStr("WiFiSSID", data.WiFiSSID);
         ui.clickStr("WiFiPass", data.WiFiPassword);
+        ui.clickStr("OTAPass", data.OTAPassword);
 
         if (ui.click("SaveBtn"))
         {
@@ -616,6 +628,7 @@ void action()
             preferences.putString("Topic", data.MQTTTopic);
             preferences.putString("wifi_ssid", data.WiFiSSID);
             preferences.putString("wifi_pass", data.WiFiPassword);
+            preferences.putString("ota_pass", data.OTAPassword);
 
             preferences.end();
 

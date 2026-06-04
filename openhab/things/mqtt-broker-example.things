@@ -1,9 +1,0 @@
-// Пример MQTT Bridge (если ещё не создан в UI).
-// Скопируйте в conf/things/ и поправьте host/port/логин.
-// UID моста должен совпадать с ссылкой в teplica-mqtt.things: mqtt:broker:mosquitto
-
-Bridge mqtt:broker:mosquitto "MQTT" [
-  host="192.168.0.51",
-  port=1883,
-  secure=false
-]

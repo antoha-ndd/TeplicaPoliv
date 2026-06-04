@@ -1,7 +1,0 @@
-{
-  "UID": "mqtt:topic:9d15be98b2:teplicaesp",
-  "label": "Теплица ESP (TeplicaPoliv)",
-  "thingTypeUID": "mqtt:topic",
-  "bridgeUID": "mqtt:broker:9d15be98b2",
-  "configuration": {}
-}

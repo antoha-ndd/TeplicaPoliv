@@ -48,6 +48,7 @@ struct Data
     float MinWaterTemp;
     char WiFiSSID[64];
     char WiFiPassword[64];
+    char OTAPassword[64];
     char MotorName[4][WEB_LABEL_LEN];
     char Temp1Name[WEB_LABEL_LEN];
     char Temp2Name[WEB_LABEL_LEN];

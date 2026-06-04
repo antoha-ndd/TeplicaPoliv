@@ -74,6 +74,7 @@ void Init()
 	Temp2 = new TSensor_DS18B20(PIN_TEMP_2);
 
 	Pump = new TOutputDevice(PIN_PUMP);
+	Pump->InvertState = true;
 	Pump->Register(App);
 	Pump->OnChageState = Pump_OnChageState;
 	Pump->Off();
