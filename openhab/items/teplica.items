@@ -1,0 +1,14 @@
+// conf/items/teplica.items
+// Каналы: mqtt:topic:mosquitto:teplicaesp:<channelId> — при смене UID Thing поправьте ссылки.
+
+Group gTeplica "Теплица" <greenhouse>
+
+Number:Temperature Teplica_Temp1 "Температура 1 [%.1f °C]" <temperature> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:temp1" }
+Number:Temperature Teplica_Temp2 "Температура 2 [%.1f °C]" <temperature> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:temp2" }
+Number Teplica_MinWater "Порог MinWater [%.1f]" <water> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:minwater" }
+Switch Teplica_Limiter "Бочка полна" <water> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:limiter" }
+Switch Teplica_Motor1 "Мотор 1" <switch> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:motor1" }
+Switch Teplica_Motor2 "Мотор 2" <switch> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:motor2" }
+Switch Teplica_Motor3 "Мотор 3" <switch> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:motor3" }
+Switch Teplica_Motor4 "Мотор 4" <switch> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:motor4" }
+Switch Teplica_Pump "Насос" <switch> (gTeplica) { channel="mqtt:topic:mosquitto:teplicaesp:pump" }

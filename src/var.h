@@ -4,6 +4,8 @@
 
 #include <espwifi.h>
 #include "Objects.h"
+#include "app/WiFiControl.h"
+#include "app/MQTTControl.h"
 #include "ObjectTimer.h"
 #include "button.h"
 #include "varbasetypes.h"
@@ -20,6 +22,10 @@ GyverPortal ui;
 Preferences preferences;
 
 TApplication *App;
+#if defined(ESP8266) || defined(ESP32)
+TWiFiControl *AppWiFi;
+TMQTTControl *AppMQTT;
+#endif
 TButton *Btn[5];
 TButton *PumpBtn;
 TLed *Led[5];
@@ -32,12 +38,21 @@ TButton *Limiter;
 
 
 
+#define WEB_LABEL_LEN 64
+
 struct Data
 {
     int Port;
     char MQTTServer[100];
     char MQTTTopic[100];
     float MinWaterTemp;
+    char WiFiSSID[64];
+    char WiFiPassword[64];
+    char MotorName[4][WEB_LABEL_LEN];
+    char Temp1Name[WEB_LABEL_LEN];
+    char Temp2Name[WEB_LABEL_LEN];
+    char BarrelName[WEB_LABEL_LEN];
+    char PumpName[WEB_LABEL_LEN];
 };
 
 Data data;

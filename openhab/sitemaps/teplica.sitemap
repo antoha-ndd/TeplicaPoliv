@@ -1,0 +1,16 @@
+// conf/sitemaps/teplica.sitemap
+// В настройках UI: Settings → Sitemaps → добавьте sitemap teplica (или импортируйте файл)
+
+sitemap teplica label="Теплица" {
+  Frame label="Теплица" {
+    Text item=Teplica_Temp1
+    Text item=Teplica_Temp2
+    Text item=Teplica_MinWater
+    Switch item=Teplica_Limiter
+    Switch item=Teplica_Motor1
+    Switch item=Teplica_Motor2
+    Switch item=Teplica_Motor3
+    Switch item=Teplica_Motor4
+    Switch item=Teplica_Pump
+  }
+}

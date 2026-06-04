@@ -1,0 +1,307 @@
+{
+  "uid": "overview",
+  "tags": [],
+  "props": {
+    "parameters": [],
+    "parameterGroups": []
+  },
+  "timestamp": "Jun 3, 2026, 3:58:45 PM",
+  "component": "oh-layout-page",
+  "config": {
+    "label": "Overview"
+  },
+  "slots": {
+    "masonry": [
+      {
+        "component": "oh-block",
+        "config": {
+          "title": "Видеонаблюдение NVR",
+          "icon": "camera"
+        },
+        "slots": {
+          "default": [
+            {
+              "component": "oh-grid-row",
+              "config": {},
+              "slots": {
+                "default": [
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 1 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr1/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 2 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr2/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Камера .93",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr3/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Камера .94",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr4/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 5",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr5/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 6 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr6/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 7 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr7/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 8 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr8/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Камера .99",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr9/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "component": "oh-grid-col",
+                    "config": {
+                      "width": "50%",
+                      "sm": "100%",
+                      "md": "50%",
+                      "lg": "33%"
+                    },
+                    "slots": {
+                      "default": [
+                        {
+                          "component": "oh-image-card",
+                          "config": {
+                            "title": "Канал 10 (NVR .80)",
+                            "url": "http://192.168.0.51:8080/ipcamera/nvr10/ipcamera.mjpeg",
+                            "refreshInterval": 0.0,
+                            "lazy": true,
+                            "style": {
+                              "width": "100%",
+                              "maxHeight": "280px",
+                              "objectFit": "contain"
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "default": []
+  }
+}

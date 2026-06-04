@@ -1,8 +1,6 @@
 
 #include <Arduino.h>
 
-String pl="";
-
 #include "AppSettings.h"
 
 
@@ -15,9 +13,15 @@ void setup()
 
 void loop()
 {
+  static bool LoopStarted = false;
 
-  App->Idle();
+  if (!LoopStarted) {
+    LoopStarted = true;
+    Serial.println("[System] Loop started");
+  }
+
   ui.tick();
+  App->Idle();
  /* 
   if (!mqtt.connected()) {
     reconnect();
