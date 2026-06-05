@@ -19,10 +19,10 @@ void Init()
 	LoadSettings();
 
 #if defined(ESP8266) || defined(ESP32)
-	Serial.begin(SERIAL_MONITOR_SPEED);
-	delay(50);
-	Serial.println();
-	Serial.println("[System] Boot");
+	// Serial.begin(SERIAL_MONITOR_SPEED);
+	//delay(50);
+	// Serial.println();
+	// Serial.println("[System] Boot");
 #endif
 
 	App = new TApplication();
@@ -74,7 +74,6 @@ void Init()
 	Temp2 = new TSensor_DS18B20(PIN_TEMP_2);
 
 	Pump = new TOutputDevice(PIN_PUMP);
-	Pump->InvertState = true;
 	Pump->Register(App);
 	Pump->OnChageState = Pump_OnChageState;
 	Pump->Off();
@@ -98,19 +97,20 @@ void Init()
 		MotorDriver[i]->InitClose();
 	}
 
-	PumpBtn = new TButton(PIN_PUMP_BTN);
-	PumpBtn->OnPress = Button5_OnClick;
-	PumpBtn->Register(App);
+	//PumpBtn = new TButton(PIN_PUMP_BTN, true);
+	//PumpBtn->OnPress = Button5_OnClick;
+	//PumpBtn->Register(App);
 
-	ui.attachBuild(build);
-	ui.attach(action);
-	ui.start();
+	sett.begin();
+	sett.onBuild(build);
+	sett.onUpdate(update);
+	sett.config.updateTout = 2000;
 
-	Serial.print("[Web] UI http://");
+	// Serial.print("[Web] UI http://");
 #if defined(ESP8266) || defined(ESP32)
-	Serial.println(AppWiFi->SoftAPIP());
+	// Serial.println(AppWiFi->SoftAPIP());
 #else
-	Serial.println();
+	// Serial.println();
 #endif
 
 	Timer1 = new TTimer();
@@ -133,5 +133,5 @@ void Init()
 	}
 #endif
 
-	Serial.println("[System] Init complete");
+	// Serial.println("[System] Init complete");
 }

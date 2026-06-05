@@ -1,28 +1,60 @@
 #include "var.h"
 #include <cstring>
 
+enum WebTabs : uint8_t
+{
+    WebTabPanel,
+    WebTabWifi,
+    WebTabMqtt
+};
+
+enum WebIds : size_t
+{
+    WebTabsId = "WebTabs"_h,
+    WebLblT1 = "WebLblT1"_h,
+    WebLblT2 = "WebLblT2"_h,
+    WebLblBarrel = "WebLblBarrel"_h,
+    WebLblM1 = "WebLblM1"_h,
+    WebLblM2 = "WebLblM2"_h,
+    WebLblM3 = "WebLblM3"_h,
+    WebLblM4 = "WebLblM4"_h,
+    WebLblPump = "WebLblPump"_h,
+    WebTemp1 = "WebTemp1"_h,
+    WebTemp2 = "WebTemp2"_h,
+    WebBarrelLed = "WebBarrelLed"_h,
+    WebMotor1Led = "WebMotor1Led"_h,
+    WebMotor2Led = "WebMotor2Led"_h,
+    WebMotor3Led = "WebMotor3Led"_h,
+    WebMotor4Led = "WebMotor4Led"_h,
+    WebPumpLed = "WebPumpLed"_h,
+    WebMqttLed = "WebMqttLed"_h,
+    WebMotor1Open = "WebMotor1Open"_h,
+    WebMotor1Close = "WebMotor1Close"_h,
+    WebMotor2Open = "WebMotor2Open"_h,
+    WebMotor2Close = "WebMotor2Close"_h,
+    WebMotor3Open = "WebMotor3Open"_h,
+    WebMotor3Close = "WebMotor3Close"_h,
+    WebMotor4Open = "WebMotor4Open"_h,
+    WebMotor4Close = "WebMotor4Close"_h,
+    WebPumpOn = "WebPumpOn"_h,
+    WebPumpOff = "WebPumpOff"_h,
+    WiFiSSID = "WiFiSSID"_h,
+    WiFiPass = "WiFiPass"_h,
+    OTAPass = "OTAPass"_h,
+    MQTTServer = "MQTTServer"_h,
+    MQTTPort = "MQTTPort"_h,
+    MQTTTopic = "MQTTTopic"_h,
+    RebootBtn = "RebootBtn"_h,
+    SaveBtn = "SaveBtn"_h,
+    WebDashRefresh = "WebDashRefresh"_h
+};
+
+static uint8_t webCurrentTab = WebTabPanel;
+
 /** Бочка полна: активный уровень — LOW (GetState() == false). */
 inline bool BarrelIsFull()
 {
     return Limiter != nullptr && !Limiter->GetState();
-}
-
-static void webActuatorTableBegin()
-{
-    GP.TABLE_BEGIN("82%,18%", GP_ALS(GP_LEFT, GP_CENTER), "100%");
-}
-
-static void webActuatorTableHeader(const char *btnOn, const char *btnOff)
-{
-    GP.TR();
-    GP.TD(GP_LEFT);
-    GP.LABEL("");
-    GP.TD(GP_CENTER);
-    GP.LABEL(btnOn);
-    GP.TD(GP_CENTER);
-    GP.LABEL(btnOff);
-    GP.TD(GP_CENTER);
-    GP.LABEL("");
 }
 
 static void webCopyStr(char *dst, const char *src, size_t len)
@@ -86,130 +118,6 @@ static void webSaveLabelNames()
     preferences.end();
 }
 
-static String webJsEscape(const String &s)
-{
-    String r = s;
-    r.replace("\\", "\\\\");
-    r.replace("'", "\\'");
-    r.replace("\r", "");
-    r.replace("\n", "\\n");
-    return r;
-}
-
-static void webNameLabel(const char *labelId, const char *text)
-{
-    GP.SEND(String(F("<span class='webNameLbl' id='")) + labelId + F("'>") + text + F("</span>"));
-}
-
-static void webRenameBtn(const char *btnId, const char *promptId, const char *labelId, const char *promptTitle, const char *text)
-{
-    GP.SEND(String(F("<button type='button' class='miniButton gp-rename-btn' id='")) + btnId +
-            F("' onclick=\"var r=prompt('") + webJsEscape(promptTitle) + F("','") + webJsEscape(text) +
-            F("');if(r!==null&&r!=='')GP_renameSend('") + promptId + F("',r,'") + labelId +
-            F("');\">...</button>"));
-}
-
-static void webNameCell(const char *btnId, const char *promptId, const char *promptTitle, const char *labelId, const char *text)
-{
-    GP.SEND(F("<div class='webNameRow'>"));
-    webRenameBtn(btnId, promptId, labelId, promptTitle, text);
-    webNameLabel(labelId, text);
-    GP.SEND(F("</div>"));
-}
-
-static void webAppLayoutStyle()
-{
-    GP.SEND(F("<style>"
-              "#grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(420px,1fr);align-items:start;gap:16px;width:min(96vw,1600px)!important;max-width:1600px!important}"
-              "#grid>.block{min-width:0;width:auto!important;max-width:none!important;margin:10px 4px!important}"
-              "#grid>.block:nth-of-type(1){grid-column:1;grid-row:1 / span 2}"
-              "#grid>.block:nth-of-type(2){grid-column:2;grid-row:1}"
-              "#grid>.block:nth-of-type(3){grid-column:2;grid-row:2}"
-              "@media screen and (max-width:768px){"
-              "#grid{display:block!important}"
-              "#grid>.block{width:unset!important;margin:20px 5px!important}"
-              "}"
-              "</style>"));
-}
-
-static void webPanelStyle()
-{
-    GP.SEND(F("<script>"
-              "function GP_renameSend(pid,val,lbl){"
-              "var x=new XMLHttpRequest();x.open('POST','/GP_click?'+pid+'='+encodeURIComponent(val),true);"
-              "x.timeout=_tout;x.onreadystatechange=function(){"
-              "if(x.readyState===4&&x.status===200&&lbl)GP_update(lbl);};x.send();}"
-              "</script>"
-              "<style>"
-              ".webPanel table td{padding:12px 6px;vertical-align:middle}"
-              ".webPanel>label{display:block;margin:18px 0 12px}"
-              ".webPanel hr{margin:22px 0}"
-              ".webNameRow{display:flex;align-items:center;gap:6px}"
-              ".webNameLbl{display:inline-block;line-height:1.4}"
-              ".gp-rename-btn{background:#4a5568!important;min-width:28px!important;padding:2px 5px!important;margin:0!important}"
-              ".webCtrlBtns{display:flex;justify-content:flex-end;align-items:center;gap:10px;width:100%}"
-              ".webCtrlBtns .miniButton{margin:0!important;min-width:44px;padding:4px 6px}"
-              ".webValWrap,.webStatusWrap{display:flex;justify-content:center;align-items:center;width:100%}"
-              ".webValLbl{display:inline-block;text-align:center}"
-              "</style>"));
-}
-
-static void webValueCell(const char *valueId, const String &text)
-{
-    GP.TD(GP_CENTER);
-    GP.SEND(F("<div class='webValWrap'>"));
-    GP.SEND(String(F("<span class='webValLbl' id='")) + valueId + F("'>") + text + F("</span>"));
-    GP.SEND(F("</div>"));
-}
-
-static void webStatusCell(const char *ledId, bool state)
-{
-    GP.TD(GP_CENTER);
-    GP.SEND(F("<div class='webStatusWrap'>"));
-    GP.LED(ledId, state);
-    GP.SEND(F("</div>"));
-}
-
-static void webControlsTableBegin()
-{
-    GP.TABLE_BEGIN("28%,60%,12%", GP_ALS(GP_LEFT, GP_RIGHT, GP_CENTER), "100%");
-}
-
-static void webControlsBtnCell(const char *openId, const char *closeId, const char *onText, const char *offText)
-{
-    GP.TD(GP_RIGHT);
-    GP.SEND(F("<div class='webCtrlBtns'>"));
-    GP.BUTTON_MINI(openId, onText, "", GP_GREEN, "44px", false, true);
-    GP.BUTTON_MINI(closeId, offText, "", GP_GREEN, "44px", false, true);
-    GP.SEND(F("</div>"));
-}
-
-static void webMotorRow(int i, const char *openId, const char *closeId, const char *ledId)
-{
-    char btnId[16], promptId[16], labelId[16];
-    snprintf(btnId, sizeof(btnId), "WebBtnRenM%d", i + 1);
-    snprintf(promptId, sizeof(promptId), "WebRenM%d", i + 1);
-    snprintf(labelId, sizeof(labelId), "WebLblM%d", i + 1);
-    bool isOpen = MotorDriver[i] && MotorDriver[i]->IsOpen();
-
-    GP.TR();
-    GP.TD(GP_LEFT);
-    webNameCell(btnId, promptId, "Название мотора", labelId, data.MotorName[i]);
-    webControlsBtnCell(openId, closeId, "Откр", "Закр");
-    webStatusCell(ledId, isOpen);
-}
-
-static void webPumpRow()
-{
-    bool isOn = Pump && Pump->GetState();
-
-    GP.TR();
-    GP.TD(GP_LEFT);
-    webNameCell("WebBtnRenPump", "WebRenPump", "Название насоса", "WebLblPump", data.PumpName);
-    webControlsBtnCell("WebPumpOn", "WebPumpOff", "Вкл", "Выкл");
-    webStatusCell("WebPumpLed", isOn);
-}
-
 static String formatTempC(TSensor_DS18B20 *sensor)
 {
     if (!sensor)
@@ -220,60 +128,48 @@ static String formatTempC(TSensor_DS18B20 *sensor)
     return String(t, 1) + " °C";
 }
 
-static void webTempRow(const char *btnId, const char *promptId, const char *labelId, const char *name, const char *valueId, TSensor_DS18B20 *sensor)
+static void webNormalizeLabel(char *value, const char *fallback)
 {
-    GP.TR();
-    GP.TD(GP_LEFT);
-    webNameCell(btnId, promptId, "Название датчика", labelId, name);
-    webValueCell(valueId, formatTempC(sensor));
+    webTrimLabel(value);
+    if (strlen(value) == 0)
+        webCopyStr(value, fallback, WEB_LABEL_LEN);
 }
 
+static void webSaveConnectionSettings()
+{
+    preferences.begin("config", false);
+
+    preferences.putInt("Port", data.Port);
+    preferences.putString("Server", data.MQTTServer);
+    preferences.putString("Topic", data.MQTTTopic);
+    preferences.putString("wifi_ssid", data.WiFiSSID);
+    preferences.putString("wifi_pass", data.WiFiPassword);
+    preferences.putString("ota_pass", data.OTAPassword);
+
+    preferences.end();
+}
+
+static void webApplyConnectionSettings()
+{
 #if defined(ESP8266) || defined(ESP32)
-static void webDashboardUpdate()
-{
-    if (ui.update("WebLblT1"))
-        ui.answer(data.Temp1Name);
-    if (ui.update("WebLblT2"))
-        ui.answer(data.Temp2Name);
-    if (ui.update("WebLblBarrel"))
-        ui.answer(data.BarrelName);
-    if (ui.update("WebLblM1"))
-        ui.answer(data.MotorName[0]);
-    if (ui.update("WebLblM2"))
-        ui.answer(data.MotorName[1]);
-    if (ui.update("WebLblM3"))
-        ui.answer(data.MotorName[2]);
-    if (ui.update("WebLblM4"))
-        ui.answer(data.MotorName[3]);
-    if (ui.update("WebLblPump"))
-        ui.answer(data.PumpName);
-
-    if (ui.update("WebTemp1"))
-        ui.answer(formatTempC(Temp1));
-    if (ui.update("WebTemp2"))
-        ui.answer(formatTempC(Temp2));
-    if (ui.update("WebBarrelLed"))
-        ui.answer(BarrelIsFull() ? 1 : 0);
-    for (int i = 0; i < 4; i++)
-    {
-        char ledId[16];
-        snprintf(ledId, sizeof(ledId), "WebMotor%dLed", i + 1);
-        if (ui.update(ledId))
-            ui.answer(MotorDriver[i] && MotorDriver[i]->IsOpen() ? 1 : 0);
-    }
-    if (ui.update("WebPumpLed"))
-        ui.answer(Pump && Pump->GetState() ? 1 : 0);
-    if (ui.update("WebMqttLed"))
-        ui.answer(AppMQTT && AppMQTT->IsMQTTConnected() ? 1 : 0);
-}
+    if (AppWiFi)
+        AppWiFi->ApplySettingsFromNvs();
 #endif
 
-static void webBarrelRow()
-{
-    GP.TR();
-    GP.TD(GP_LEFT);
-    webNameCell("WebBtnRenBarrel", "WebRenBarrel", "Название датчика", "WebLblBarrel", data.BarrelName);
-    webStatusCell("WebBarrelLed", BarrelIsFull());
+    if (!AppMQTT)
+        return;
+
+    if (strlen(data.MQTTServer) > 0)
+    {
+        String ttopic = String(data.MQTTTopic);
+        if (ttopic.length() == 0)
+            ttopic = "teplica";
+        AppMQTT->InitMQTT(String(data.MQTTServer), data.Port, ttopic);
+    }
+    else
+    {
+        AppMQTT->MqttShutdown();
+    }
 }
 
 void MQTT_Motor1(String payload){
@@ -355,7 +251,6 @@ void Button4_OnClick(TButton *Button)
 
 void Button5_OnClick(TButton *Button)
 {
-
     Pump->Toggle();
 };
 
@@ -396,19 +291,12 @@ void Motor4_OnChageState(TMotorDriver *Device)
 	Led[3]->SetState(Device->IsOpen());
 };
 
-static bool webHandleRenameClick(const char *promptId, char *dst)
+static bool webLabelInput(sets::Builder &b, size_t id, const char *label, char *value, const char *fallback)
 {
-    if (!ui.click() || !ui.click(promptId))
+    if (!b.Input(id, label, AnyPtr(value, WEB_LABEL_LEN)))
         return false;
 
-    String val = ui.clickText();
-    val.trim();
-    if (val.length() == 0)
-        return false;
-    if (val.length() >= WEB_LABEL_LEN)
-        val = val.substring(0, WEB_LABEL_LEN - 1);
-
-    webCopyStr(dst, val.c_str(), WEB_LABEL_LEN);
+    webNormalizeLabel(value, fallback);
     webSaveLabelNames();
     return true;
 }
@@ -461,196 +349,150 @@ void LoadSettings()
     preferences.end();
 }
 
-void build()
+static void webBuildSensors(sets::Builder &b)
 {
-    GP.BUILD_BEGIN(GP_DARK, 1600);
+    sets::Group group(b, "Датчики");
 
-#if defined(ESP8266) || defined(ESP32)
-    GP.UPDATE(
-        "WebLblT1,WebLblT2,WebLblBarrel,WebLblM1,WebLblM2,WebLblM3,WebLblM4,WebLblPump,"
-        "WebTemp1,WebTemp2,WebBarrelLed,WebMotor1Led,WebMotor2Led,WebMotor3Led,WebMotor4Led,WebPumpLed,WebMqttLed",
-        2000);
-    GP.UPDATE_CLICK(
-        "WebTemp1,WebTemp2,WebBarrelLed,WebMotor1Led,WebMotor2Led,WebMotor3Led,WebMotor4Led,WebPumpLed,WebMqttLed",
-        "WebMotor1Open,WebMotor1Close,WebMotor2Open,WebMotor2Close,WebMotor3Open,WebMotor3Close,WebMotor4Open,WebMotor4Close,WebPumpOn,WebPumpOff");
-    GP.RELOAD_CLICK("WebDashRefresh");
-#endif
-
-    GP.GRID_BEGIN(1600);
-    GP.GRID_RESPONSIVE(768);
-    webAppLayoutStyle();
-
-    GP.BLOCK_TAB_BEGIN("Панель");
-
-    webPanelStyle();
-    GP.SEND(F("<div class='webPanel'>"));
-
-    GP.LABEL("Датчики", "", GP_DEFAULT, 0, true);
-    webActuatorTableBegin();
-   // webActuatorTableHeader("", "");
-    webTempRow("WebBtnRenT1", "WebRenT1", "WebLblT1", data.Temp1Name, "WebTemp1", Temp1);
-    webTempRow("WebBtnRenT2", "WebRenT2", "WebLblT2", data.Temp2Name, "WebTemp2", Temp2);
-    webBarrelRow();
-    GP.TABLE_END();
-    GP.HR();
-
-    GP.LABEL("Моторы", "", GP_DEFAULT, 0, true);
-    webControlsTableBegin();
-    webMotorRow(0, "WebMotor1Open", "WebMotor1Close", "WebMotor1Led");
-    webMotorRow(1, "WebMotor2Open", "WebMotor2Close", "WebMotor2Led");
-    webMotorRow(2, "WebMotor3Open", "WebMotor3Close", "WebMotor3Led");
-    webMotorRow(3, "WebMotor4Open", "WebMotor4Close", "WebMotor4Led");
-    GP.TABLE_END();
-
-    GP.HR();
-    GP.LABEL("Насос", "", GP_DEFAULT, 0, true);
-    webControlsTableBegin();
-    webPumpRow();
-    GP.TABLE_END();
-
-    GP.SEND(F("</div>"));
-
-    GP.BLOCK_END();
-
-    GP_MAKE_BLOCK_TAB("Wi-Fi",
-                      GP.PLAIN("После смены SSID/пароля нажмите «Перезагрузить».");
-                      GP.BREAK();
-                      GP_MAKE_BOX(
-                          GP.LABEL("SSID");
-                          GP.TEXT("WiFiSSID", "", data.WiFiSSID););
-
-                      GP_MAKE_BOX(
-                          GP.LABEL("Пароль");
-                          GP.PASS("WiFiPass", "", data.WiFiPassword, "", 63););
-
-                      GP_MAKE_BOX(
-                          GP.LABEL("OTA пароль");
-                          GP.PASS("OTAPass", "", data.OTAPassword, "", 63);););
-
-    GP.BLOCK_TAB_BEGIN("MQTT");
-
-    GP_MAKE_BOX(
-        GP.LABEL("Cервер");
-        GP.TEXT("MQTTServer", "", data.MQTTServer););
-
-    GP_MAKE_BOX(
-        GP.LABEL("Порт");
-        GP.NUMBER("MQTTPort", "", data.Port));
-
-    GP_MAKE_BOX(
-        GP.LABEL("Топик");
-        GP.TEXT("MQTTTopic", "", data.MQTTTopic););
-
-#if defined(ESP8266) || defined(ESP32)
-    GP.BOX_BEGIN(GP_LEFT, "100%");
-    GP.LABEL("MQTT: ");
-    GP.LED("WebMqttLed", AppMQTT && AppMQTT->IsMQTTConnected());
-    GP.BOX_END();
-#endif
-
-    GP.BOX_BEGIN(GP_LEFT, "100%");
-    GP.BUTTON("RebootBtn", "Перезагрузить");
-    GP.BUTTON("SaveBtn", "Сохранить");
-    GP.BUTTON_MINI("WebDashRefresh", "Обновить", "", GP_GRAY, "", false, true);
-    GP.BOX_END();
-
-    GP.BLOCK_END();
-
-    GP.GRID_END();
-
-    GP.BUILD_END();
+    {
+        sets::Row row(b);
+        webLabelInput(b, WebLblT1, "", data.Temp1Name, "T1");
+        b.Label(WebTemp1, "", formatTempC(Temp1));
+    }
+    {
+        sets::Row row(b);
+        webLabelInput(b, WebLblT2, "", data.Temp2Name, "T2");
+        b.Label(WebTemp2, "", formatTempC(Temp2));
+    }
+    {
+       sets::Row row(b);
+        webLabelInput(b, WebLblBarrel, "", data.BarrelName, "Бочка полна");
+        b.LED(WebBarrelLed, "", BarrelIsFull());
+    }
 }
 
-void action()
+static void webBuildMotorRow(sets::Builder &b, int index, size_t labelId, size_t openId, size_t closeId, size_t ledId, const char *fallback)
 {
+    sets::Row row(b);
+    webLabelInput(b, labelId, "", data.MotorName[index], fallback);
+    if (b.Button(openId, "Откр", sets::Colors::Green) && MotorDriver[index])
+        MotorDriver[index]->Open();
+    if (b.Button(closeId, "Закр", sets::Colors::Green) && MotorDriver[index])
+        MotorDriver[index]->Close();
+    b.LED(ledId, "", MotorDriver[index] && MotorDriver[index]->IsOpen());
+}
+
+static void webBuildMotors(sets::Builder &b)
+{
+    sets::Group group(b, "Моторы");
+    webBuildMotorRow(b, 0, WebLblM1, WebMotor1Open, WebMotor1Close, WebMotor1Led, "М1");
+    webBuildMotorRow(b, 1, WebLblM2, WebMotor2Open, WebMotor2Close, WebMotor2Led, "М2");
+    webBuildMotorRow(b, 2, WebLblM3, WebMotor3Open, WebMotor3Close, WebMotor3Led, "М3");
+    webBuildMotorRow(b, 3, WebLblM4, WebMotor4Open, WebMotor4Close, WebMotor4Led, "М4");
+}
+
+static void webBuildPump(sets::Builder &b)
+{
+    sets::Group group(b, "Насос");
+    sets::Row row(b);
+    webLabelInput(b, WebLblPump, "", data.PumpName, "Насос");
+    if (b.Button(WebPumpOn, "Вкл", sets::Colors::Green) && Pump)
+        Pump->On();
+    if (b.Button(WebPumpOff, "Выкл", sets::Colors::Green) && Pump)
+        Pump->Off();
+    b.LED(WebPumpLed, "", Pump && Pump->GetState());
+}
+
+static void webBuildPanel(sets::Builder &b)
+{
+    webBuildSensors(b);
+    webBuildMotors(b);
+    webBuildPump(b);
+}
+
+static void webBuildWifi(sets::Builder &b)
+{
+    sets::Group group(b, "Wi-Fi");
+    b.Paragraph("После смены SSID/пароля нажмите «Сохранить».");
+    b.Input(WiFiSSID, "SSID", AnyPtr(data.WiFiSSID, sizeof(data.WiFiSSID)));
+    b.Pass(WiFiPass, "Пароль", AnyPtr(data.WiFiPassword, sizeof(data.WiFiPassword)));
+    b.Pass(OTAPass, "OTA пароль", AnyPtr(data.OTAPassword, sizeof(data.OTAPassword)));
+}
+
+static void webBuildMqtt(sets::Builder &b)
+{
+    sets::Group group(b, "MQTT");
+    b.Input(MQTTServer, "Сервер", AnyPtr(data.MQTTServer, sizeof(data.MQTTServer)));
+    b.Number(MQTTPort, "Порт", &data.Port, 1, 65535);
+    b.Input(MQTTTopic, "Топик", AnyPtr(data.MQTTTopic, sizeof(data.MQTTTopic)));
 #if defined(ESP8266) || defined(ESP32)
-    if (ui.update())
+    b.LED(WebMqttLed, "MQTT", AppMQTT && AppMQTT->IsMQTTConnected());
+#endif
+}
+
+static void webBuildActions(sets::Builder &b)
+{
+    sets::Buttons buttons(b);
+
+    if (b.Button(RebootBtn, "Перезагрузить", sets::Colors::Orange))
+        ESP.restart();
+
+    if (b.Button(SaveBtn, "Сохранить", sets::Colors::Green))
     {
-        webDashboardUpdate();
+        webSaveConnectionSettings();
+        webApplyConnectionSettings();
+    }
+
+    if (b.Button(WebDashRefresh, "Обновить", sets::Colors::Gray))
+        b.reload();
+}
+
+void build(sets::Builder &b)
+{
+    if (b.Tabs(WebTabsId, "Панель;Wi-Fi;MQTT", &webCurrentTab))
+    {
+        b.reload();
         return;
     }
-#endif
 
-    if (ui.click())
+    switch (webCurrentTab)
     {
-        if (webHandleRenameClick("WebRenT1", data.Temp1Name))
-            return;
-        if (webHandleRenameClick("WebRenT2", data.Temp2Name))
-            return;
-        if (webHandleRenameClick("WebRenBarrel", data.BarrelName))
-            return;
-        if (webHandleRenameClick("WebRenM1", data.MotorName[0]))
-            return;
-        if (webHandleRenameClick("WebRenM2", data.MotorName[1]))
-            return;
-        if (webHandleRenameClick("WebRenM3", data.MotorName[2]))
-            return;
-        if (webHandleRenameClick("WebRenM4", data.MotorName[3]))
-            return;
-        if (webHandleRenameClick("WebRenPump", data.PumpName))
-            return;
-
-        if (ui.click("WebMotor1Open"))
-            MotorDriver[0]->Open();
-        else if (ui.click("WebMotor1Close"))
-            MotorDriver[0]->Close();
-        else if (ui.click("WebMotor2Open"))
-            MotorDriver[1]->Open();
-        else if (ui.click("WebMotor2Close"))
-            MotorDriver[1]->Close();
-        else if (ui.click("WebMotor3Open"))
-            MotorDriver[2]->Open();
-        else if (ui.click("WebMotor3Close"))
-            MotorDriver[2]->Close();
-        else if (ui.click("WebMotor4Open"))
-            MotorDriver[3]->Open();
-        else if (ui.click("WebMotor4Close"))
-            MotorDriver[3]->Close();
-        else if (ui.click("WebPumpOn"))
-            Pump->On();
-        else if (ui.click("WebPumpOff"))
-            Pump->Off();
-
-        ui.clickStr("MQTTServer", data.MQTTServer);
-        ui.clickStr("MQTTTopic", data.MQTTTopic);
-        ui.clickInt("MQTTPort", data.Port);
-        ui.clickStr("WiFiSSID", data.WiFiSSID);
-        ui.clickStr("WiFiPass", data.WiFiPassword);
-        ui.clickStr("OTAPass", data.OTAPassword);
-
-        if (ui.click("SaveBtn"))
-        {
-
-            preferences.begin("config", false);
-
-            preferences.putInt("Port", data.Port);
-            preferences.putString("Server", data.MQTTServer);
-            preferences.putString("Topic", data.MQTTTopic);
-            preferences.putString("wifi_ssid", data.WiFiSSID);
-            preferences.putString("wifi_pass", data.WiFiPassword);
-            preferences.putString("ota_pass", data.OTAPassword);
-
-            preferences.end();
-
-#if defined(ESP8266) || defined(ESP32)
-            if (AppWiFi)
-                AppWiFi->ApplySettingsFromNvs();
-#endif
-
-            if (strlen(data.MQTTServer) > 0)
-            {
-                String ttopic = String(data.MQTTTopic);
-                if (ttopic.length() == 0)
-                    ttopic = "teplica";
-                AppMQTT->InitMQTT(String(data.MQTTServer), data.Port, ttopic);
-            }
-            else
-                AppMQTT->MqttShutdown();
-        }
-
-        if (ui.click("RebootBtn"))
-            ESP.restart();
+    case WebTabWifi:
+        webBuildWifi(b);
+        break;
+    case WebTabMqtt:
+        webBuildMqtt(b);
+        break;
+    case WebTabPanel:
+    default:
+        webBuildPanel(b);
+        break;
     }
+
+    webBuildActions(b);
+}
+
+void update(sets::Updater &upd)
+{
+    upd.update(WebLblT1, data.Temp1Name);
+    upd.update(WebLblT2, data.Temp2Name);
+    upd.update(WebLblBarrel, data.BarrelName);
+    upd.update(WebLblM1, data.MotorName[0]);
+    upd.update(WebLblM2, data.MotorName[1]);
+    upd.update(WebLblM3, data.MotorName[2]);
+    upd.update(WebLblM4, data.MotorName[3]);
+    upd.update(WebLblPump, data.PumpName);
+
+    upd.update(WebTemp1, formatTempC(Temp1));
+    upd.update(WebTemp2, formatTempC(Temp2));
+    upd.update(WebBarrelLed, BarrelIsFull() ? 1 : 0);
+    upd.update(WebMotor1Led, MotorDriver[0] && MotorDriver[0]->IsOpen() ? 1 : 0);
+    upd.update(WebMotor2Led, MotorDriver[1] && MotorDriver[1]->IsOpen() ? 1 : 0);
+    upd.update(WebMotor3Led, MotorDriver[2] && MotorDriver[2]->IsOpen() ? 1 : 0);
+    upd.update(WebMotor4Led, MotorDriver[3] && MotorDriver[3]->IsOpen() ? 1 : 0);
+    upd.update(WebPumpLed, Pump && Pump->GetState() ? 1 : 0);
+#if defined(ESP8266) || defined(ESP32)
+    upd.update(WebMqttLed, AppMQTT && AppMQTT->IsMQTTConnected() ? 1 : 0);
+#endif
 }
 
 void Timer1_Timeout(TTimer *Timer)

@@ -10,7 +10,7 @@
 #include "button.h"
 #include "varbasetypes.h"
 #include "MotorDriver.h"
-#include <GyverPortal.h>
+#include <SettingsESP.h>
 #include <Preferences.h>
 #include "ds18b20.h"
 #include "led.h"
@@ -18,7 +18,7 @@
 //#include <ESP8266WiFi.h>
 
 
-GyverPortal ui;
+SettingsESP sett("Teplica Poliv");
 Preferences preferences;
 
 TApplication *App;

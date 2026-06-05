@@ -17,14 +17,10 @@ void loop()
 
   if (!LoopStarted) {
     LoopStarted = true;
-    Serial.println("[System] Loop started");
+    // Serial.println("[System] Loop started");
   }
 
-  ui.tick();
+  sett.tick();
   App->Idle();
- /* 
-  if (!mqtt.connected()) {
-    reconnect();
-  }
-  mqtt.loop();*/
+
 }
