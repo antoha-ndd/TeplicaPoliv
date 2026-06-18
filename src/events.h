@@ -4,6 +4,7 @@
 enum WebTabs : uint8_t
 {
     WebTabPanel,
+    WebTabTimers,
     WebTabWifi,
     WebTabMqtt
 };
@@ -36,6 +37,14 @@ enum WebIds : size_t
     WebMotor3Close = "WebMotor3Close"_h,
     WebMotor4Open = "WebMotor4Open"_h,
     WebMotor4Close = "WebMotor4Close"_h,
+    WebMotor1TimerMinutes = "WebMotor1TimerMinutes"_h,
+    WebMotor2TimerMinutes = "WebMotor2TimerMinutes"_h,
+    WebMotor3TimerMinutes = "WebMotor3TimerMinutes"_h,
+    WebMotor4TimerMinutes = "WebMotor4TimerMinutes"_h,
+    WebMotor1TimerLeft = "WebMotor1TimerLeft"_h,
+    WebMotor2TimerLeft = "WebMotor2TimerLeft"_h,
+    WebMotor3TimerLeft = "WebMotor3TimerLeft"_h,
+    WebMotor4TimerLeft = "WebMotor4TimerLeft"_h,
     WebPumpOn = "WebPumpOn"_h,
     WebPumpOff = "WebPumpOff"_h,
     WiFiSSID = "WiFiSSID"_h,
@@ -50,6 +59,8 @@ enum WebIds : size_t
 };
 
 static uint8_t webCurrentTab = WebTabPanel;
+static const unsigned long MOTOR_TIMER_MINUTE_MS = 60000UL;
+static const char *MOTOR_TIMER_PREF_KEYS[MOTOR_COUNT] = {"mtimer1", "mtimer2", "mtimer3", "mtimer4"};
 
 /** Бочка полна: активный уровень — LOW (GetState() == false). */
 inline bool BarrelIsFull()
@@ -87,7 +98,7 @@ static void webTrimLabel(char *s)
 static void webLabelDefaults()
 {
     const char *motors[] = {"М1", "М2", "М3", "М4"};
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < MOTOR_COUNT; i++)
         webCopyStr(data.MotorName[i], motors[i], WEB_LABEL_LEN);
     webCopyStr(data.Temp1Name, "T1", WEB_LABEL_LEN);
     webCopyStr(data.Temp2Name, "T2", WEB_LABEL_LEN);
@@ -128,6 +139,153 @@ static String formatTempC(TSensor_DS18B20 *sensor)
     return String(t, 1) + " °C";
 }
 
+static bool motorIndexValid(int index)
+{
+    return index >= 0 && index < MOTOR_COUNT;
+}
+
+static void normalizeMotorTimerMinutes(int index)
+{
+    if (!motorIndexValid(index))
+        return;
+
+    if (data.MotorTimerMinutes[index] < 0)
+        data.MotorTimerMinutes[index] = 0;
+    if (data.MotorTimerMinutes[index] > MOTOR_TIMER_MAX_MINUTES)
+        data.MotorTimerMinutes[index] = MOTOR_TIMER_MAX_MINUTES;
+}
+
+static void normalizeAllMotorTimerMinutes()
+{
+    for (int i = 0; i < MOTOR_COUNT; i++)
+        normalizeMotorTimerMinutes(i);
+}
+
+static unsigned long motorTimerDurationMs(int index)
+{
+    if (!motorIndexValid(index) || data.MotorTimerMinutes[index] <= 0)
+        return 0;
+
+    return (unsigned long)data.MotorTimerMinutes[index] * MOTOR_TIMER_MINUTE_MS;
+}
+
+static void resetMotorTimer(int index)
+{
+    if (!motorIndexValid(index))
+        return;
+
+    MotorTimerActive[index] = false;
+    MotorTimerStartedAt[index] = 0;
+}
+
+static void startMotorTimer(int index)
+{
+    if (!motorIndexValid(index))
+        return;
+
+    if (motorTimerDurationMs(index) == 0)
+    {
+        resetMotorTimer(index);
+        return;
+    }
+
+    MotorTimerStartedAt[index] = millis();
+    MotorTimerActive[index] = true;
+}
+
+static unsigned long motorTimerRemainingMs(int index)
+{
+    if (!motorIndexValid(index) || !MotorTimerActive[index])
+        return 0;
+
+    unsigned long duration = motorTimerDurationMs(index);
+    if (duration == 0)
+        return 0;
+
+    unsigned long elapsed = millis() - MotorTimerStartedAt[index];
+    if (elapsed >= duration)
+        return 0;
+
+    return duration - elapsed;
+}
+
+static String formatMotorTimerRemaining(int index)
+{
+    if (!motorIndexValid(index) || !MotorDriver[index] || !MotorDriver[index]->IsOpen())
+        return String("выкл");
+
+    if (data.MotorTimerMinutes[index] <= 0)
+        return String("без таймера");
+
+    if (!MotorTimerActive[index])
+        return String("ожидание");
+
+    unsigned long totalSeconds = (motorTimerRemainingMs(index) + 999UL) / 1000UL;
+    unsigned long minutes = totalSeconds / 60UL;
+    unsigned long seconds = totalSeconds % 60UL;
+    String secondsText = seconds < 10 ? String("0") + String(seconds) : String(seconds);
+
+    return String(minutes) + ":" + secondsText;
+}
+
+static void OpenMotor(int index)
+{
+    if (motorIndexValid(index) && MotorDriver[index])
+        MotorDriver[index]->Open();
+}
+
+static void CloseMotor(int index)
+{
+    resetMotorTimer(index);
+    if (motorIndexValid(index) && MotorDriver[index])
+        MotorDriver[index]->Close();
+}
+
+static void ToggleMotor(int index)
+{
+    if (!motorIndexValid(index) || !MotorDriver[index])
+        return;
+
+    if (MotorDriver[index]->IsOpen())
+        CloseMotor(index);
+    else
+        OpenMotor(index);
+}
+
+static void checkMotorTimers()
+{
+    for (int i = 0; i < MOTOR_COUNT; i++)
+    {
+        if (!MotorTimerActive[i])
+            continue;
+
+        if (!MotorDriver[i] || !MotorDriver[i]->IsOpen() || motorTimerDurationMs(i) == 0)
+        {
+            resetMotorTimer(i);
+            continue;
+        }
+
+        if (motorTimerRemainingMs(i) == 0)
+            CloseMotor(i);
+    }
+}
+
+static void handleMotorChange(int index, TMotorDriver *Device)
+{
+    if (!motorIndexValid(index) || !Device)
+        return;
+
+    if (Device->IsOpen())
+        startMotorTimer(index);
+    else
+        resetMotorTimer(index);
+
+    if (AppMQTT && AppMQTT->IsMQTTConnected())
+        AppMQTT->PublishUnderTopic(String("state/motor") + String(index + 1), Device->IsOpen() ? "1" : "0");
+    if (Led[index])
+        Led[index]->SetState(Device->IsOpen());
+}
+
 static void webNormalizeLabel(char *value, const char *fallback)
 {
     webTrimLabel(value);
@@ -146,6 +304,16 @@ static void webSaveConnectionSettings()
     preferences.putString("wifi_pass", data.WiFiPassword);
     preferences.putString("ota_pass", data.OTAPassword);
 
+    preferences.end();
+}
+
+static void webSaveMotorTimerSettings()
+{
+    normalizeAllMotorTimerMinutes();
+
+    preferences.begin("config", false);
+    for (int i = 0; i < MOTOR_COUNT; i++)
+        preferences.putInt(MOTOR_TIMER_PREF_KEYS[i], data.MotorTimerMinutes[i]);
     preferences.end();
 }
 
@@ -174,29 +342,29 @@ static void webApplyConnectionSettings()
 
 void MQTT_Motor1(String payload){
 
-    if(payload=="1") MotorDriver[0]->Open();
-    else MotorDriver[0]->Close();
+    if(payload=="1") OpenMotor(0);
+    else CloseMotor(0);
 };
 
 void MQTT_Motor2(String payload){
 
-    if(payload=="1") MotorDriver[1]->Open();
-    else MotorDriver[1]->Close();
+    if(payload=="1") OpenMotor(1);
+    else CloseMotor(1);
 
 
 };
 
 void MQTT_Motor3(String payload){
 
-    if(payload=="1") MotorDriver[2]->Open();
-    else MotorDriver[2]->Close();
+    if(payload=="1") OpenMotor(2);
+    else CloseMotor(2);
 
 };
 
 void MQTT_Motor4(String payload){
 
-    if(payload=="1") MotorDriver[3]->Open();
-    else MotorDriver[3]->Close();
+    if(payload=="1") OpenMotor(3);
+    else CloseMotor(3);
 
 };
 
@@ -210,43 +378,23 @@ void MQTT_Pump(String payload){
 
 void Button1_OnClick(TButton *Button)
 {
-    int n = 0;
-
-    if (MotorDriver[n]->IsOpen())
-        MotorDriver[n]->Close();
-    else
-        MotorDriver[n]->Open();
+    ToggleMotor(0);
 };
 
 void Button2_OnClick(TButton *Button)
 {
 
-    int n = 1;
-
-    if (MotorDriver[n]->IsOpen())
-        MotorDriver[n]->Close();
-    else
-        MotorDriver[n]->Open();
+    ToggleMotor(1);
 };
 
 void Button3_OnClick(TButton *Button)
 {
-    int n = 2;
-
-    if (MotorDriver[n]->IsOpen())
-        MotorDriver[n]->Close();
-    else
-        MotorDriver[n]->Open();
+    ToggleMotor(2);
 };
 
 void Button4_OnClick(TButton *Button)
 {
-    int n = 3;
-
-    if (MotorDriver[n]->IsOpen())
-        MotorDriver[n]->Close();
-    else
-        MotorDriver[n]->Open();
+    ToggleMotor(3);
 };
 
 void Button5_OnClick(TButton *Button)
@@ -265,30 +413,22 @@ void Pump_OnChageState(TSimpleDevice *Device, bool State)
 
 void Motor1_OnChageState(TMotorDriver *Device)
 {
-	if (AppMQTT && AppMQTT->IsMQTTConnected())
-		AppMQTT->PublishUnderTopic("state/motor1", Device->IsOpen() ? "1" : "0");
-	Led[0]->SetState(Device->IsOpen());
+	handleMotorChange(0, Device);
 };
 
 void Motor2_OnChageState(TMotorDriver *Device)
 {
-	if (AppMQTT && AppMQTT->IsMQTTConnected())
-		AppMQTT->PublishUnderTopic("state/motor2", Device->IsOpen() ? "1" : "0");
-	Led[1]->SetState(Device->IsOpen());
+	handleMotorChange(1, Device);
 };
 
 void Motor3_OnChageState(TMotorDriver *Device)
 {
-	if (AppMQTT && AppMQTT->IsMQTTConnected())
-		AppMQTT->PublishUnderTopic("state/motor3", Device->IsOpen() ? "1" : "0");
-	Led[2]->SetState(Device->IsOpen());
+	handleMotorChange(2, Device);
 };
 
 void Motor4_OnChageState(TMotorDriver *Device)
 {
-	if (AppMQTT && AppMQTT->IsMQTTConnected())
-		AppMQTT->PublishUnderTopic("state/motor4", Device->IsOpen() ? "1" : "0");
-	Led[3]->SetState(Device->IsOpen());
+	handleMotorChange(3, Device);
 };
 
 static bool webLabelInput(sets::Builder &b, size_t id, const char *label, char *value, const char *fallback)
@@ -308,6 +448,9 @@ void LoadSettings()
 
     data.Port = preferences.getInt("Port", 1883);
     data.MinWaterTemp = preferences.getFloat("MinWaterTemp", 0);
+    for (int i = 0; i < MOTOR_COUNT; i++)
+        data.MotorTimerMinutes[i] = preferences.getInt(MOTOR_TIMER_PREF_KEYS[i], 0);
+    normalizeAllMotorTimerMinutes();
 
     {
         String s = preferences.getString("Server", "");
@@ -375,9 +518,9 @@ static void webBuildMotorRow(sets::Builder &b, int index, size_t labelId, size_t
     sets::Row row(b);
     webLabelInput(b, labelId, "", data.MotorName[index], fallback);
     if (b.Button(openId, "Откр", sets::Colors::Green) && MotorDriver[index])
-        MotorDriver[index]->Open();
+        OpenMotor(index);
     if (b.Button(closeId, "Закр", sets::Colors::Green) && MotorDriver[index])
-        MotorDriver[index]->Close();
+        CloseMotor(index);
     b.LED(ledId, "", MotorDriver[index] && MotorDriver[index]->IsOpen());
 }
 
@@ -388,6 +531,34 @@ static void webBuildMotors(sets::Builder &b)
     webBuildMotorRow(b, 1, WebLblM2, WebMotor2Open, WebMotor2Close, WebMotor2Led, "М2");
     webBuildMotorRow(b, 2, WebLblM3, WebMotor3Open, WebMotor3Close, WebMotor3Led, "М3");
     webBuildMotorRow(b, 3, WebLblM4, WebMotor4Open, WebMotor4Close, WebMotor4Led, "М4");
+}
+
+static void webBuildMotorTimerRow(sets::Builder &b, int index, size_t timerId, size_t leftId)
+{
+    sets::Row row(b);
+    if (b.Number(timerId, data.MotorName[index], &data.MotorTimerMinutes[index], 0, MOTOR_TIMER_MAX_MINUTES))
+    {
+        normalizeMotorTimerMinutes(index);
+        webSaveMotorTimerSettings();
+        if (MotorDriver[index] && MotorDriver[index]->IsOpen())
+        {
+            if (data.MotorTimerMinutes[index] > 0 && !MotorTimerActive[index])
+                startMotorTimer(index);
+            if (data.MotorTimerMinutes[index] == 0)
+                resetMotorTimer(index);
+        }
+    }
+    b.Label(leftId, "Ост", formatMotorTimerRemaining(index));
+}
+
+static void webBuildMotorTimers(sets::Builder &b)
+{
+    sets::Group group(b, "Таймеры моторов");
+    b.Paragraph("Время задается в минутах. 0 - без автоотключения.");
+    webBuildMotorTimerRow(b, 0, WebMotor1TimerMinutes, WebMotor1TimerLeft);
+    webBuildMotorTimerRow(b, 1, WebMotor2TimerMinutes, WebMotor2TimerLeft);
+    webBuildMotorTimerRow(b, 2, WebMotor3TimerMinutes, WebMotor3TimerLeft);
+    webBuildMotorTimerRow(b, 3, WebMotor4TimerMinutes, WebMotor4TimerLeft);
 }
 
 static void webBuildPump(sets::Builder &b)
@@ -439,6 +610,7 @@ static void webBuildActions(sets::Builder &b)
     if (b.Button(SaveBtn, "Сохранить", sets::Colors::Green))
     {
         webSaveConnectionSettings();
+        webSaveMotorTimerSettings();
         webApplyConnectionSettings();
     }
 
@@ -448,7 +620,7 @@ static void webBuildActions(sets::Builder &b)
 
 void build(sets::Builder &b)
 {
-    if (b.Tabs(WebTabsId, "Панель;Wi-Fi;MQTT", &webCurrentTab))
+    if (b.Tabs(WebTabsId, "Панель;Таймеры;Wi-Fi;MQTT", &webCurrentTab))
     {
         b.reload();
         return;
@@ -456,6 +628,9 @@ void build(sets::Builder &b)
 
     switch (webCurrentTab)
     {
+    case WebTabTimers:
+        webBuildMotorTimers(b);
+        break;
     case WebTabWifi:
         webBuildWifi(b);
         break;
@@ -481,6 +656,10 @@ void update(sets::Updater &upd)
     upd.update(WebLblM3, data.MotorName[2]);
     upd.update(WebLblM4, data.MotorName[3]);
     upd.update(WebLblPump, data.PumpName);
+    upd.update(WebMotor1TimerMinutes, data.MotorTimerMinutes[0]);
+    upd.update(WebMotor2TimerMinutes, data.MotorTimerMinutes[1]);
+    upd.update(WebMotor3TimerMinutes, data.MotorTimerMinutes[2]);
+    upd.update(WebMotor4TimerMinutes, data.MotorTimerMinutes[3]);
 
     upd.update(WebTemp1, formatTempC(Temp1));
     upd.update(WebTemp2, formatTempC(Temp2));
@@ -489,6 +668,10 @@ void update(sets::Updater &upd)
     upd.update(WebMotor2Led, MotorDriver[1] && MotorDriver[1]->IsOpen() ? 1 : 0);
     upd.update(WebMotor3Led, MotorDriver[2] && MotorDriver[2]->IsOpen() ? 1 : 0);
     upd.update(WebMotor4Led, MotorDriver[3] && MotorDriver[3]->IsOpen() ? 1 : 0);
+    upd.update(WebMotor1TimerLeft, formatMotorTimerRemaining(0));
+    upd.update(WebMotor2TimerLeft, formatMotorTimerRemaining(1));
+    upd.update(WebMotor3TimerLeft, formatMotorTimerRemaining(2));
+    upd.update(WebMotor4TimerLeft, formatMotorTimerRemaining(3));
     upd.update(WebPumpLed, Pump && Pump->GetState() ? 1 : 0);
 #if defined(ESP8266) || defined(ESP32)
     upd.update(WebMqttLed, AppMQTT && AppMQTT->IsMQTTConnected() ? 1 : 0);
@@ -499,7 +682,9 @@ void Timer1_Timeout(TTimer *Timer)
 {
 
     if (!Limiter->GetState())
-        MotorDriver[3]->Close();
+        CloseMotor(3);
+
+    checkMotorTimers();
 
 
 };
@@ -570,7 +755,7 @@ void MqttPublishFullState()
         AppMQTT->PublishUnderTopic("state/temp2", String(Temp2->Temperature(false), 2));
     if (Limiter)
         AppMQTT->PublishUnderTopic("state/limiter", BarrelIsFull() ? "1" : "0");
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < MOTOR_COUNT; i++)
     {
         if (MotorDriver[i])
             AppMQTT->PublishUnderTopic(String("state/motor") + String(i + 1), MotorDriver[i]->IsOpen() ? "1" : "0");

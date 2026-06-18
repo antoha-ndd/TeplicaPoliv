@@ -88,7 +88,7 @@ void Init()
 	MotorDriver[2]->OnChageState = Motor3_OnChageState;
 	MotorDriver[3]->OnChageState = Motor4_OnChageState;
 
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < MOTOR_COUNT; i++)
 	{
 		MotorDriver[i]->Register(App);
 		MotorDriver[i]->AutoClose = false;
